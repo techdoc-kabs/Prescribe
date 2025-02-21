@@ -4,7 +4,7 @@ from datetime import datetime
 import random
 import seaborn as sns
 import sqlite3
-
+import re, os
 
 data = {
     'Drug': ['', 'Aspirin', 'Lisinopril', 'Metformin', 'Atorvastatin', 'Ibuprofen', 'Amoxicillin', 'Ciprofloxacin', 'Omeprazole', 'Simvastatin', 'Levothyroxine',
