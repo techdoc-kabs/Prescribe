@@ -1,17 +1,10 @@
 import streamlit as st
 import pandas as pd
-from itertools import combinations
 from datetime import datetime
-import os, re
-import mysql.connector
 import random
 import seaborn as sns
+import sqlite3
 
-
-def format_text_same_line(label, value, label_style='', value_style=''):
-    label_style = f'color: #AA4A44; font-size: 18px; {label_style}'
-    value_style = f'color: white; font-size: 18px; {value_style}'
-    st.markdown(f"<span style='{label_style}'>{label} </span><span style='{value_style}'>{value}</span>", unsafe_allow_html=True)
 
 data = {
     'Drug': ['', 'Aspirin', 'Lisinopril', 'Metformin', 'Atorvastatin', 'Ibuprofen', 'Amoxicillin', 'Ciprofloxacin', 'Omeprazole', 'Simvastatin', 'Levothyroxine',
@@ -54,27 +47,6 @@ def calculate_max_dose(row):
 def format_drug_info(df):
     drug_list = [f"{row['Formulation']} {row['Drug']} {row['Drug Strength']}" for _, row in df.iterrows()]
     return drug_list
-
-
-# def create_connection():
-#     config = st.secrets["config"]
-#     return mysql.connector.connect(**config)
-
-def create_connection():
-    config = {
-        'user': 'root',
-        'password': '',
-        # 'host': 'localhost',
-	'host': '127.0.0.1',
-        'port': 3306,
-        'database': 'kabs_db'
-    }
-    return mysql.connector.connect(**config)
-
-
-
-
-
 
 def get_frequency_options():
     frequency_mapping = {
@@ -140,7 +112,6 @@ def extract_strength_formualtion(drug_strength):
 def cal_quant_per_day(frequency, dose_at_a_time, strength_per_formulation):
     dose_value = extract_numeric_part(dose_at_a_time)
     if dose_value is None:
-        # raise ValueError("Invalid drug strength format")
         st.error('Invalid drug_strength')
     total_daily_dose = frequency * dose_value
     quant_per_day = total_daily_dose / strength_per_formulation
@@ -154,65 +125,18 @@ def cal_dose_per_day(frequency, dose_at_a_time):
     return frequency * dose_value
 
 
+def highlight_headers(df):
+    return df.style.set_table_styles([
+        {'selector': 'thead th', 'props': [('background-color', 'lightblue'), ('color', 'black'), ('font-weight', 'bold')]}])
+
+def random_color():
+    return f'rgb({random.randint(0, 255)}, {random.randint(0, 255)}, {random.randint(0, 255)})'
 
 
-def fetch_appointments(db, search_input):
-    cursor = db.cursor(dictionary=True, buffered=True)
-    if search_input.strip().upper().startswith("APP-") or search_input.isdigit():
-        query = """
-        SELECT student_id, student_name, appointment_id, appointment_date, appointment_type, clinician_name
-        FROM appointments
-        WHERE appointment_id = %s
-        """
-        cursor.execute(query, (search_input.strip(),))
-    else: 
-        name_parts = search_input.strip().split()
-        query_conditions = []
-        params = []
-
-        if len(name_parts) == 2:
-            first_name, last_name = name_parts
-            query_conditions.append("student_name LIKE %s")
-            query_conditions.append("student_name LIKE %s")
-            params.extend([f"%{first_name} {last_name}%", f"%{last_name} {first_name}%"])
-        else:
-            query_conditions.append("student_name LIKE %s")
-            params.append(f"%{search_input}%")
-
-        query = f"""
-        SELECT student_id, student_name, appointment_id, appointment_date, appointment_type, clinician_name
-        FROM appointments
-        WHERE {" OR ".join(query_conditions)}
-        """
-        cursor.execute(query, tuple(params))
-    results = cursor.fetchall()
-    cursor.close()
-    return results
-
-def insert_prescription(appointment_id, prescription, prescriber_instructions,dose_freq_per_day, daily_quantity_prescribed, max_dose, max_prescribed_quantity, prescriber, cadre):
-    try:
-        conn = create_connection()
-        cursor = conn.cursor()
-        insert_query = """
-        INSERT INTO prescriptions 
-        (appointment_id, prescription, prescriber_instructions, dose_freq_per_day, daily_quantity_prescribed, max_dose, max_prescribed_quantity, prescriber, cadre, timestamp)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s,%s)
-        """
-        current_timestamp = datetime.now()
-        cursor.execute(insert_query, (
-            appointment_id, prescription,prescriber_instructions, dose_freq_per_day, daily_quantity_prescribed, max_dose, 
-            max_prescribed_quantity, prescriber, cadre, current_timestamp
-        ))
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        st.success("Prescription inserted successfully.")
-
-    except mysql.connector.Error as err:
-        st.error(f"Error: {err}")
-
-
+def create_connection():
+    db_path = "kabs_db.sqlite"  # SQLite database path
+    conn = sqlite3.connect(db_path, check_same_thread=False)
+    return conn
 def create_prescriptions_table():
     try:
         conn = create_connection()
@@ -220,17 +144,17 @@ def create_prescriptions_table():
 
         create_table_query = """
         CREATE TABLE IF NOT EXISTS prescriptions (
-            prescription_id INT AUTO_INCREMENT PRIMARY KEY,
-            appointment_id VARCHAR(255),
-            prescription VARCHAR(255),
+            prescription_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            appointment_id TEXT,
+            prescription TEXT,
             prescriber_instructions TEXT,
             dose_freq_per_day TEXT,
             daily_quantity_prescribed TEXT,
             max_dose TEXT,
             max_prescribed_quantity TEXT,
-            prescriber VARCHAR(255),
-            cadre VARCHAR(255),
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            prescriber TEXT,
+            cadre TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """
 
@@ -238,51 +162,17 @@ def create_prescriptions_table():
         conn.commit()
         cursor.close()
         conn.close()
-        # st.success("Prescriptions table created successfully (if it didn't already exist).")
-    except mysql.connector.Error as err:
+    except Exception as err:
         st.error(f"Error: {err}")
 
-def prescriptions(db, appointment_id):
-    try:
-        cursor = db.cursor(dictionary=True)
-        query = """
-        SELECT 
-            appointment_id, prescription, prescriber_instructions, dose_freq_per_day, daily_quantity_prescribed, 
-            max_dose, max_prescribed_quantity, prescriber, cadre
-        FROM prescriptions
-        WHERE appointment_id = %s
-        """
-        cursor.execute(query, (appointment_id,))
-        result = cursor.fetchall()
-        if not result:
-            return pd.DataFrame()
-        df = pd.DataFrame(result)
-        cursor.close()
-
-        return df
-
-    except Exception as e:
-        print(f"Error: {e}")
-        return pd.DataFrame()  
-
-
-def highlight_headers(df):
-    return df.style.set_table_styles([
-        {'selector': 'thead th', 'props': [('background-color', 'lightblue'), ('color', 'black'), ('font-weight', 'bold')]}])
-
-
-def random_color():
-    return f'rgb({random.randint(0, 255)}, {random.randint(0, 255)}, {random.randint(0, 255)})'
 
 def insert_prescription(appointment_id, prescription, prescriber_instructions, dose_freq_per_day, daily_quantity_prescribed, max_dose, max_prescribed_quantity, prescriber, cadre):
     try:
         conn = create_connection()
         cursor = conn.cursor()
-
-        # Check if the same prescription already exists for this appointment
         check_query = """
         SELECT COUNT(*) FROM prescriptions 
-        WHERE appointment_id = %s AND prescription = %s
+        WHERE appointment_id = ? AND prescription = ?
         """
         cursor.execute(check_query, (appointment_id, prescription))
         result = cursor.fetchone()
@@ -290,11 +180,10 @@ def insert_prescription(appointment_id, prescription, prescriber_instructions, d
         if result and result[0] > 0:
             st.error("This medicine has already been prescribed for this appointment. Duplicate entries are not allowed.")
         else:
-            # Proceed with insertion
             insert_query = """
             INSERT INTO prescriptions 
             (appointment_id, prescription, prescriber_instructions, dose_freq_per_day, daily_quantity_prescribed, max_dose, max_prescribed_quantity, prescriber, cadre, timestamp)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             current_timestamp = datetime.now()
             cursor.execute(insert_query, (
@@ -307,45 +196,124 @@ def insert_prescription(appointment_id, prescription, prescriber_instructions, d
         cursor.close()
         conn.close()
 
-    except mysql.connector.Error as err:
-        st.error(f"Error: {err}")
+    except sqlite3.Error as err:
+        st.error(f"Database error: {err}")
 
 
-#### REMOVE PRESCRIPTION ############
 
-def remove_prescription(db, appointment_id, prescription_to_remove):
-    cursor = db.cursor(buffered=True)
-    check_query = """
-    SELECT prescription FROM prescriptions 
-    WHERE appointment_id = %s
-    """
+def fetch_appointments(search_input):
+    conn = create_connection()
+    cursor = conn.cursor()
+    
+    if search_input.strip().upper().startswith("APP-") or search_input.isdigit():
+        query = """
+        SELECT student_id, student_name, appointment_id, appointment_date, appointment_type, clinician_name
+        FROM appointments
+        WHERE appointment_id = ?
+        """
+        cursor.execute(query, (search_input.strip(),))
+    else:
+        name_parts = search_input.strip().split()
+        query_conditions = []
+        params = []
+
+        if len(name_parts) == 2:
+            first_name, last_name = name_parts
+            query_conditions.append("student_name LIKE ?")
+            query_conditions.append("student_name LIKE ?")
+            params.extend([f"%{first_name} {last_name}%", f"%{last_name} {first_name}%"])
+        else:
+            query_conditions.append("student_name LIKE ?")
+            params.append(f"%{search_input}%")
+
+        query = f"""
+        SELECT student_id, student_name, appointment_id, appointment_date, appointment_type, clinician_name
+        FROM appointments
+        WHERE {" OR ".join(query_conditions)}
+        """
+        cursor.execute(query, tuple(params))
+    
+    results = cursor.fetchall()
+    cursor.close()
+    return results
+
+def remove_prescription(appointment_id, prescription_to_remove):
+    conn = create_connection()
+    cursor = conn.cursor()
+    check_query = "SELECT prescription FROM prescriptions WHERE appointment_id = ?"
     cursor.execute(check_query, (appointment_id,))
     existing_prescription = cursor.fetchone()
-
     if existing_prescription and existing_prescription[0]:
         existing_prescription_list = existing_prescription[0].split(", ")
-        if prescription_to_remove in existing_prescription_list:
-            existing_prescription_list.remove(prescription_to_remove)
-            updated_prescription = ", ".join(existing_prescription_list)
-            if updated_prescription:
-                update_query = """
-                UPDATE prescriptions 
-                SET prescription = %s 
-                WHERE appointment_id = %s
-                """
-                cursor.execute(update_query, (updated_prescription, appointment_id))
-            else:
-                delete_query = "DELETE FROM prescriptions WHERE appointment_id = %s"
-                cursor.execute(delete_query, (appointment_id,))
-            db.commit()
-            st.success(f"prescription '{prescription_to_remove}' removed from appointment ID {appointment_id}.")
-        else:
-            st.warning(f"prescription '{prescription_to_remove}' not found in the record.")
     else:
-        st.warning(f"No prescriptions found for appointment ID {appointment_id}.")
+        st.warning("No prescription found for this appointment.")
     cursor.close()
+    conn.close()
 
 
+def fetch_appointments(db, search_input):
+    cursor = db.cursor()
+    if search_input.strip().upper().startswith("APP-") or search_input.isdigit():
+        query = """
+        SELECT student_id, student_name, appointment_id, appointment_date, appointment_type, clinician_name
+        FROM appointments
+        WHERE appointment_id = ?
+        """
+        cursor.execute(query, (search_input.strip(),))
+    else: 
+        name_parts = search_input.strip().split()
+        query_conditions = []
+        params = []
+
+        if len(name_parts) == 2:
+            first_name, last_name = name_parts
+            query_conditions.append("student_name LIKE ?")
+            query_conditions.append("student_name LIKE ?")
+            params.extend([f"%{first_name} {last_name}%", f"%{last_name} {first_name}%"])
+        else:
+            query_conditions.append("student_name LIKE ?")
+            params.append(f"%{search_input}%")
+
+        query = f"""
+        SELECT student_id, student_name, appointment_id, appointment_date, appointment_type, clinician_name
+        FROM appointments
+        WHERE {" OR ".join(query_conditions)}
+        """
+        cursor.execute(query, tuple(params))
+    results = cursor.fetchall()
+    cursor.close()
+    return results
+
+
+def prescriptions(db_path, appointment_id):
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row 
+        cursor = conn.cursor()
+
+        query = """
+        SELECT 
+            appointment_id, prescription, prescriber_instructions, dose_freq_per_day, 
+            daily_quantity_prescribed, max_dose, max_prescribed_quantity, prescriber, cadre
+        FROM prescriptions
+        WHERE appointment_id = ?
+        """
+        cursor.execute(query, (appointment_id,))
+        rows = cursor.fetchall()
+
+        if not rows:
+            return pd.DataFrame()
+
+        df = pd.DataFrame([dict(row) for row in rows]) 
+
+        cursor.close()
+        conn.close()
+        
+        return df
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return pd.DataFrame()
 
 
 
@@ -353,7 +321,6 @@ def remove_prescription(db, appointment_id, prescription_to_remove):
 def main():
     db = create_connection()
     create_prescriptions_table()
-
     st.sidebar.subheader("APPOINTMENT DETAILS")
     with st.sidebar.expander("🔍SEARCH", expanded=True):
         search_input = st.text_input("Enter Name or Appointment ID", "")
@@ -364,17 +331,38 @@ def main():
     selected_record = None
     if results:
         st.sidebar.write(f"**{len(results)} result(s) found**")
-        options = {f"{r['student_name']} - {r['appointment_id']}": r for r in results}
+        results_dicts = [
+            {
+                'student_id': r[0],
+                'student_name': r[1],
+                'appointment_id': r[2],
+                'appointment_date': r[3],
+                'appointment_type': r[4],
+                'clinician_name': r[5]
+            } 
+            for r in results
+        ]
+        
+        options = {f"{r['student_name']} - {r['appointment_id']}": r for r in results_dicts}
         selected_option = st.sidebar.selectbox("Select a record:", list(options.keys()))
         selected_record = options[selected_option]
     if selected_record:
         with st.sidebar.expander("📄 APPOINTMENT DETAILS", expanded=True):
-            st.write(f"Student ID: {selected_record['student_id']}")
-            st.write(f"Student Name: {selected_record['student_name']}")
-            st.write(f"Appointment ID: {selected_record['appointment_id']}")
-            st.write(f"Appointment Date: {selected_record['appointment_date']}")
-            st.write(f"Appointment Type: {selected_record['appointment_type']}")
-            st.write(f"Clinician: {selected_record['clinician_name']}")
+            student_id = selected_record['student_id']
+            student_name = selected_record['student_name']
+            appointment_id = selected_record['appointment_id']
+            appointment_date = selected_record['appointment_date']
+            appointment_type = selected_record['appointment_type']
+            clinician_name = selected_record['clinician_name']
+            reason = selected_record.get('reason', 'N/A') 
+            st.write(f"Student ID: {student_id}")
+            st.write(f"Student Name: {student_name}")
+            st.write(f"Appointment ID: {appointment_id}")
+            st.write(f"Appointment Type: {appointment_type}")
+            st.write(f"Appointment reason: {reason}")
+            st.write(f"Clinician: {clinician_name}")
+            st.write(f'Appointment Date: {appointment_date}')
+
         st.session_state["appointment_id"] = selected_record["appointment_id"]
         appointment_id = st.session_state.appointment_id
         st.session_state["student_name"] = selected_record["student_name"]
@@ -382,8 +370,8 @@ def main():
         st.session_state["student_id"] = selected_record["student_id"]
         st.session_state["appointment_date"] = selected_record["appointment_date"]
         st.session_state["clinician_name"] = selected_record["clinician_name"]
+        
         if appointment_id:
-
             drug_list = format_drug_info(df2)
             frequency_options = ["Once daily", "Twice daily", "Thrice a day", "4 times daily", "2 hourly", 
                                  "4 hourly", "6 hourly", "12 hourly", "24 hourly", "Weekly", "Every 2 weeks", 
@@ -447,8 +435,9 @@ def main():
                         appointment_id, prescription, prescriber_instrctions, dose_freq_per_day, quant_per_day, max_dose,
                         quantity_prescribed, prescriber, prescriber_cadre
                     )
+        
 
-            
+        if st.checkbox('Existing Prescriptions'):
             prescriptions_df = prescriptions(db, appointment_id)
             if not prescriptions_df.empty:
                 c1, c2 = st.columns([2.5, 1.5])
@@ -460,39 +449,36 @@ def main():
                     else:
                         st.warning("Please select an prescription to remove.")
 
-            prescriptions_df.index = prescriptions_df.index + 1
-            if not prescriptions_df.empty:
-                prescriptions_df = prescriptions_df.drop(['appointment_id'], axis=1)
-                all_prescriptions = set(prescriptions_df["prescription"])
-                palette = sns.color_palette("Set3", len(all_prescriptions))
-                color_map = {
-                    item: f'background-color: rgb({int(r*255)}, {int(g*255)}, {int(b*255)}); color: black; border-radius: 5px; padding: 3px;'
-                    for item, (r, g, b) in zip(all_prescriptions, palette)
-                }
-                def random_text_color():
-                    return f'rgb({random.randint(0, 255)}, {random.randint(0, 255)}, {random.randint(0, 255)})'
-                def apply_styles(row):
-                    prescription_html = f'<span style="{color_map.get(row["prescription"], "")}">{row["prescription"]}</span>'
-                    def style_text(text):
-                        text_color = random_text_color()
-                        return f'<span style="border: 2px solid {text_color}; color: {text_color}; border-radius: 50px; padding: 3px 8px;">{text}</span>'
+                prescriptions_df.index = prescriptions_df.index + 1
+                if not prescriptions_df.empty:
+                    prescriptions_df = prescriptions_df.drop(['appointment_id'], axis=1)
+                    st.write(prescriptions_df)
+                    all_prescriptions = set(prescriptions_df["prescription"])
+                    palette = sns.color_palette("Set3", len(all_prescriptions))
+                    color_map = {
+                        item: f'background-color: rgb({int(r*255)}, {int(g*255)}, {int(b*255)}); color: black; border-radius: 5px; padding: 3px;'
+                        for item, (r, g, b) in zip(all_prescriptions, palette)
+                    }
+                    def random_text_color():
+                        return f'rgb({random.randint(0, 255)}, {random.randint(0, 255)}, {random.randint(0, 255)})'
+                    def apply_styles(row):
+                        prescription_html = f'<span style="{color_map.get(row["prescription"], "")}">{row["prescription"]}</span>'
+                        def style_text(text):
+                            text_color = random_text_color()
+                            return f'<span style="border: 2px solid {text_color}; color: {text_color}; border-radius: 50px; padding: 3px 8px;">{text}</span>'
 
-                    return pd.Series([
-                        prescription_html, 
-                        style_text(row["prescriber_instructions"]), 
-                        style_text(row["max_prescribed_quantity"])
-                    ], index=["PRESCRIPTION", 'PRESCIRIBER INSTRCTIONS', "PRESCRIBED QUANTITY"])
+                        return pd.Series([
+                            prescription_html, 
+                            style_text(row["prescriber_instructions"]), 
+                            style_text(row["max_prescribed_quantity"])
+                        ], index=["PRESCRIPTION", 'PRESCIRIBER INSTRCTIONS', "PRESCRIBED QUANTITY"])
 
-                styled_df = prescriptions_df.apply(apply_styles, axis=1)
-                styled_df.index = styled_df.index + 1 
-                styled_df = highlight_headers(styled_df)
-                st.markdown(styled_df.to_html(escape=False, index=False), unsafe_allow_html=True)
-            else:
-                st.warning('No prescriptions')
-
-
-       
-
+                    styled_df = prescriptions_df.apply(apply_styles, axis=1)
+                    styled_df.index = styled_df.index + 1 
+                    styled_df = highlight_headers(styled_df)
+                    st.markdown(styled_df.to_html(escape=False, index=False), unsafe_allow_html=True)
+                else:
+                    st.warning('No prescriptions')
 
     db.close()
 if __name__ == "__main__":
