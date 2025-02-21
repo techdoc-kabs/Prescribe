@@ -56,8 +56,18 @@ def format_drug_info(df):
     return drug_list
 
 
+# def create_connection():
+#     config = st.secrets["config"]
+#     return mysql.connector.connect(**config)
+
 def create_connection():
-    config = st.secrets["config"]
+    config = {
+        'user': 'root',
+        'password': '',
+        'host': 'localhost',
+        'port': 3306,
+        'database': 'kabs_db'
+    }
     return mysql.connector.connect(**config)
 
 def get_frequency_options():
