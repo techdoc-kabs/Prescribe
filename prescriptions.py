@@ -64,11 +64,17 @@ def create_connection():
     config = {
         'user': 'root',
         'password': '',
-        'host': 'localhost',
+        # 'host': 'localhost',
+	'host': '127.0.0.1',
         'port': 3306,
         'database': 'kabs_db'
     }
     return mysql.connector.connect(**config)
+
+
+
+
+
 
 def get_frequency_options():
     frequency_mapping = {
