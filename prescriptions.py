@@ -6,6 +6,14 @@ import seaborn as sns
 import sqlite3
 import re, os
 
+
+st.set_page_config(
+    page_title='Prescriptions',
+    page_icon='📋',
+    layout='wide',
+    initial_sidebar_state='expanded'
+)
+
 data = {
     'Drug': ['', 'Aspirin', 'Lisinopril', 'Metformin', 'Atorvastatin', 'Ibuprofen', 'Amoxicillin', 'Ciprofloxacin', 'Omeprazole', 'Simvastatin', 'Levothyroxine',
              'Losartan', 'Gabapentin', 'Amlodipine', 'Warfarin', 'Metoprolol', 'Albuterol', 'Pantoprazole', 'Prednisone', 'Hydrochlorothiazide', 'Tramadol'],
@@ -134,9 +142,10 @@ def random_color():
 
 
 def create_connection():
-    db_path = "kabs_db.sqlite"  # SQLite database path
+    db_path = "kabs.db" 
     conn = sqlite3.connect(db_path, check_same_thread=False)
     return conn
+
 def create_prescriptions_table():
     try:
         conn = create_connection()
@@ -199,44 +208,6 @@ def insert_prescription(appointment_id, prescription, prescriber_instructions, d
     except sqlite3.Error as err:
         st.error(f"Database error: {err}")
 
-
-
-def fetch_appointments(search_input):
-    conn = create_connection()
-    cursor = conn.cursor()
-    
-    if search_input.strip().upper().startswith("APP-") or search_input.isdigit():
-        query = """
-        SELECT student_id, student_name, appointment_id, appointment_date, appointment_type, clinician_name
-        FROM appointments
-        WHERE appointment_id = ?
-        """
-        cursor.execute(query, (search_input.strip(),))
-    else:
-        name_parts = search_input.strip().split()
-        query_conditions = []
-        params = []
-
-        if len(name_parts) == 2:
-            first_name, last_name = name_parts
-            query_conditions.append("student_name LIKE ?")
-            query_conditions.append("student_name LIKE ?")
-            params.extend([f"%{first_name} {last_name}%", f"%{last_name} {first_name}%"])
-        else:
-            query_conditions.append("student_name LIKE ?")
-            params.append(f"%{search_input}%")
-
-        query = f"""
-        SELECT student_id, student_name, appointment_id, appointment_date, appointment_type, clinician_name
-        FROM appointments
-        WHERE {" OR ".join(query_conditions)}
-        """
-        cursor.execute(query, tuple(params))
-    
-    results = cursor.fetchall()
-    cursor.close()
-    return results
-
 def remove_prescription(appointment_id, prescription_to_remove):
     conn = create_connection()
     cursor = conn.cursor()
@@ -285,34 +256,31 @@ def fetch_appointments(db, search_input):
     return results
 
 
-def prescriptions(db_path, appointment_id):
+def fetch_prescriptions(db, appointment_id):
     try:
-        conn = sqlite3.connect(db_path)
-        conn.row_factory = sqlite3.Row 
-        cursor = conn.cursor()
+        cursor = db.cursor()
+        print(f"Fetching prescriptions for: '{appointment_id}' (Type: {type(appointment_id)})")
 
         query = """
         SELECT 
-            appointment_id, prescription, prescriber_instructions, dose_freq_per_day, 
-            daily_quantity_prescribed, max_dose, max_prescribed_quantity, prescriber, cadre
+            appointment_id, prescription, prescriber_instructions, dose_freq_per_day, daily_quantity_prescribed, 
+            max_dose, max_prescribed_quantity, prescriber, cadre
         FROM prescriptions
         WHERE appointment_id = ?
         """
-        cursor.execute(query, (appointment_id,))
-        rows = cursor.fetchall()
-
-        if not rows:
+        cursor.execute(query, (str(appointment_id).strip(),))
+        result = cursor.fetchall()
+        if not result:
+            print("No prescriptions found.")  # Debugging
             return pd.DataFrame()
-
-        df = pd.DataFrame([dict(row) for row in rows]) 
-
+        columns = [col[0] for col in cursor.description]
+        df = pd.DataFrame(result, columns=columns)
         cursor.close()
-        conn.close()
-        
+
         return df
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error fetching prescriptions: {e}")
         return pd.DataFrame()
 
 
@@ -321,16 +289,16 @@ def prescriptions(db_path, appointment_id):
 def main():
     db = create_connection()
     create_prescriptions_table()
-    st.sidebar.subheader("APPOINTMENT DETAILS")
-    with st.sidebar.expander("🔍SEARCH", expanded=True):
-        search_input = st.text_input("Enter Name or Appointment ID", "")
+    st.sidebar.subheader(":blue[APPOINTMENT BIODATA]")
+    with st.expander("🔍SEARCH", expanded=True):
+        search_input = st.text_input("ENTER PATIENT NAME", "", placeholder='eg. Paul')
     results = []
     student_data = fetch_appointments(db, search_input)
     if search_input.strip():
         results = fetch_appointments(db, search_input)
     selected_record = None
     if results:
-        st.sidebar.write(f"**{len(results)} result(s) found**")
+        st.sidebar.write(f":orange[**{len(results)} result(s) found**]")
         results_dicts = [
             {
                 'student_id': r[0],
@@ -371,7 +339,10 @@ def main():
         st.session_state["appointment_date"] = selected_record["appointment_date"]
         st.session_state["clinician_name"] = selected_record["clinician_name"]
         
+       
+
         if appointment_id:
+            prescriptions_df = fetch_prescriptions(db, appointment_id)
             drug_list = format_drug_info(df2)
             frequency_options = ["Once daily", "Twice daily", "Thrice a day", "4 times daily", "2 hourly", 
                                  "4 hourly", "6 hourly", "12 hourly", "24 hourly", "Weekly", "Every 2 weeks", 
@@ -436,9 +407,8 @@ def main():
                         quantity_prescribed, prescriber, prescriber_cadre
                     )
         
-
-        if st.checkbox('Existing Prescriptions'):
-            prescriptions_df = prescriptions(db, appointment_id)
+        if st.checkbox('Delete prescription'):
+            st.write('---')
             if not prescriptions_df.empty:
                 c1, c2 = st.columns([2.5, 1.5])
                 with c1.form("prescription_to_remove"):
@@ -448,40 +418,46 @@ def main():
                         remove_prescription(db, appointment_id, prescription)
                     else:
                         st.warning("Please select an prescription to remove.")
+            else:
+                st.warning('No added prescriptions')
 
-                prescriptions_df.index = prescriptions_df.index + 1
-                if not prescriptions_df.empty:
-                    prescriptions_df = prescriptions_df.drop(['appointment_id'], axis=1)
-                    st.write(prescriptions_df)
-                    all_prescriptions = set(prescriptions_df["prescription"])
-                    palette = sns.color_palette("Set3", len(all_prescriptions))
-                    color_map = {
-                        item: f'background-color: rgb({int(r*255)}, {int(g*255)}, {int(b*255)}); color: black; border-radius: 5px; padding: 3px;'
-                        for item, (r, g, b) in zip(all_prescriptions, palette)
-                    }
-                    def random_text_color():
-                        return f'rgb({random.randint(0, 255)}, {random.randint(0, 255)}, {random.randint(0, 255)})'
-                    def apply_styles(row):
-                        prescription_html = f'<span style="{color_map.get(row["prescription"], "")}">{row["prescription"]}</span>'
-                        def style_text(text):
-                            text_color = random_text_color()
-                            return f'<span style="border: 2px solid {text_color}; color: {text_color}; border-radius: 50px; padding: 3px 8px;">{text}</span>'
+        if st.checkbox('View Prescriptions'):
+            st.write('---')
+            st.subheader(f'Prescriptions for {student_name}')
+            prescriptions_df.index = prescriptions_df.index + 1
+            if not prescriptions_df.empty:
+                prescriptions_df = prescriptions_df.drop(['appointment_id'], axis=1)
+                all_prescriptions = set(prescriptions_df["prescription"])
+                palette = sns.color_palette("Set3", len(all_prescriptions))
+                color_map = {
+                    item: f'background-color: rgb({int(r*255)}, {int(g*255)}, {int(b*255)}); color: black; border-radius: 5px; padding: 3px;'
+                    for item, (r, g, b) in zip(all_prescriptions, palette)
+                }
+                def random_text_color():
+                    return f'rgb({random.randint(0, 255)}, {random.randint(0, 255)}, {random.randint(0, 255)})'
+                def apply_styles(row):
+                    prescription_html = f'<span style="{color_map.get(row["prescription"], "")}">{row["prescription"]}</span>'
+                    def style_text(text):
+                        text_color = random_text_color()
+                        return f'<span style="border: 2px solid {text_color}; color: {text_color}; border-radius: 50px; padding: 3px 8px;">{text}</span>'
 
-                        return pd.Series([
-                            prescription_html, 
-                            style_text(row["prescriber_instructions"]), 
-                            style_text(row["max_prescribed_quantity"])
-                        ], index=["PRESCRIPTION", 'PRESCIRIBER INSTRCTIONS', "PRESCRIBED QUANTITY"])
+                    return pd.Series([
+                        prescription_html, 
+                        style_text(row["prescriber_instructions"]), 
+                        style_text(row["max_prescribed_quantity"])
+                    ], index=["PRESCRIPTION", 'PRESCIRIBER INSTRCTIONS', "PRESCRIBED QUANTITY"])
 
-                    styled_df = prescriptions_df.apply(apply_styles, axis=1)
-                    styled_df.index = styled_df.index + 1 
-                    styled_df = highlight_headers(styled_df)
-                    st.markdown(styled_df.to_html(escape=False, index=False), unsafe_allow_html=True)
-                else:
-                    st.warning('No prescriptions')
+                styled_df = prescriptions_df.apply(apply_styles, axis=1)
+                styled_df.index = styled_df.index + 1 
+                styled_df = highlight_headers(styled_df)
+                st.markdown(styled_df.to_html(escape=False, index=False), unsafe_allow_html=True)
+            else:
+                st.warning(f'No prescriptions for {student_name}')
+
+    
+
 
     db.close()
 if __name__ == "__main__":
 	main()
-
 
