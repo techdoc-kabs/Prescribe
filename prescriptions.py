@@ -290,7 +290,7 @@ def main():
     db = create_connection()
     create_prescriptions_table()
     st.sidebar.subheader(":blue[APPOINTMENT BIODATA]")
-    with st.expander("🔍SEARCH", expanded=True):
+    with st.sidebar.expander("🔍SEARCH", expanded=True):
         search_input = st.text_input("ENTER PATIENT NAME", "", placeholder='eg. Paul')
     results = []
     student_data = fetch_appointments(db, search_input)
