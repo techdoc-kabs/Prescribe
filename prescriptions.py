@@ -407,19 +407,19 @@ def main():
                         quantity_prescribed, prescriber, prescriber_cadre
                     )
         
-        if st.checkbox('Delete prescription'):
-            st.write('---')
-            if not prescriptions_df.empty:
-                c1, c2 = st.columns([2.5, 1.5])
-                with c1.form("prescription_to_remove"):
-                    prescription = st.selectbox("Select prescription to remove", prescriptions_df['prescription'].explode().unique())
-                    remove = st.form_submit_button(":red[Delete prescription]")
-                    if remove:
-                        remove_prescription(db, appointment_id, prescription)
-                    else:
-                        st.warning("Please select an prescription to remove.")
-            else:
-                st.warning('No added prescriptions')
+        # if st.checkbox('Delete prescription'):
+        #     st.write('---')
+        #     if not prescriptions_df.empty:
+        #         c1, c2 = st.columns([2.5, 1.5])
+        #         with c1.form("prescription_to_remove"):
+        #             prescription = st.selectbox("Select prescription to remove", prescriptions_df['prescription'].explode().unique())
+        #             remove = st.form_submit_button(":red[Delete prescription]")
+        #             if remove:
+        #                 remove_prescription(db, appointment_id, prescription)
+        #             else:
+        #                 st.warning("Please select an prescription to remove.")
+        #     else:
+        #         st.warning('No added prescriptions')
 
         if st.checkbox('View Prescriptions'):
             st.write('---')
