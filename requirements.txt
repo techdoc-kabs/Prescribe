@@ -11,12 +11,13 @@ matplotlib==3.8.4
 moviepy==1.0.3
 mysql_connector_repackaged==0.3.1
 Pillow==10.3.0
-plotly==5.22.0
 pushbullet.py==0.9.1
 PyAutoGUI==0.9.54
 PyPDF2==3.0.1
 pytesseract==0.3.13
-bcrypt==4.2.0
+bcrypt>=4.0.1
+plotly>=5.23.0
+rich==13.7.1
 python_docx==1.1.2
 reportlab==4.2.0
 requests==2.32.3
