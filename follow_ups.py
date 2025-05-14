@@ -1,5 +1,5 @@
 import streamlit as st
-import mysql.connector
+# import mysql.connector
 import pandas as pd
 from datetime import datetime
 import consultations
