@@ -16,7 +16,7 @@ pushbullet.py==0.9.1
 PyAutoGUI==0.9.54
 PyPDF2==3.0.1
 pytesseract==0.3.13
-python_bcrypt==0.3.2
+bcrypt==4.1.2
 python_docx==1.1.2
 reportlab==4.2.0
 requests==2.32.3
