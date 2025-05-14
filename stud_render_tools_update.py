@@ -1,5 +1,5 @@
 import streamlit as st
-import mysql.connector
+# import mysql.connector
 import pandas as pd
 from datetime import datetime
 # from pushbullet import Pushbullet
@@ -8,7 +8,7 @@ import smtplib
 from email.message import EmailMessage
 import sqlite3
 
-API_KEY = st.secrets["push_API_KEY"]
+# API_KEY = st.secrets["push_API_KEY"]
 # pb = Pushbullet(API_KEY)
 
 def create_connection():
