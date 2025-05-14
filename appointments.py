@@ -1,5 +1,5 @@
 import streamlit as st
-import mysql.connector
+# import mysql.connector
 import pandas as pd
 import datetime
 from streamlit_option_menu import option_menu
