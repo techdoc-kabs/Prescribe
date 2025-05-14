@@ -1,5 +1,5 @@
 import streamlit as st
-import mysql.connector
+# import mysql.connector
 from streamlit_option_menu import option_menu
 from datetime import datetime
 import base64
