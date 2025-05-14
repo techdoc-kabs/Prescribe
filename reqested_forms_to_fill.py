@@ -3,7 +3,7 @@ import streamlit as st
 import json
 import pandas as pd
 import os
-import mysql.connector
+# import mysql.connector
 import importlib
 from datetime import datetime
 
