@@ -5,16 +5,16 @@ import datetime
 from streamlit_option_menu import option_menu
 from datetime import datetime
 
-def create_connection():
-    config = {
-        'user': 'root',
-        'password': '',
-        'host': 'localhost',
-        'port': 3306,
-        'database': 'kabs_db'
-    }
-    db = mysql.connector.connect(**config)
-    return db
+# def create_connection():
+#     config = {
+#         'user': 'root',
+#         'password': '',
+#         'host': 'localhost',
+#         'port': 3306,
+#         'database': 'kabs_db'
+#     }
+#     db = mysql.connector.connect(**config)
+#     return db
 
 
 def generate_appointment_id(db):
