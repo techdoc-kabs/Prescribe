@@ -10,7 +10,7 @@ fpdf==1.7.2
 matplotlib==3.8.4
 moviepy==1.0.3
 mysql_connector_repackaged==0.3.1
-Pillow==11.2.1
+Pillow==10.3.0
 plotly==5.22.0
 pushbullet.py==0.9.1
 PyAutoGUI==0.9.54
