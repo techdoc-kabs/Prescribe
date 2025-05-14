@@ -16,9 +16,9 @@ import io
 import docx
 from PIL import Image
 import pytesseract
-import fitz 
+# import fitz 
 import docx2txt
-import fitz
+# import fitz
 from bs4 import BeautifulSoup
 import requests
 from PIL import Image
