@@ -3,7 +3,7 @@ import pandas as pd
 from itertools import combinations
 from datetime import datetime
 import os, re
-import mysql.connector
+# import mysql.connector
 import random
 import seaborn as sns
 
