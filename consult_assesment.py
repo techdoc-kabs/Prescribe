@@ -1,18 +1,18 @@
 import streamlit as st
-import mysql.connector
+# import mysql.connector
 import pandas as pd
 from datetime import datetime
 from streamlit_option_menu import option_menu
 
-def create_connection():
-    config = {
-        'user': 'root',
-        'password': '',
-        'host': 'localhost',
-        'port': 3306,
-        'database': 'kabs_db'
-    }
-    return mysql.connector.connect(**config)
+# def create_connection():
+#     config = {
+#         'user': 'root',
+#         'password': '',
+#         'host': 'localhost',
+#         'port': 3306,
+#         'database': 'kabs_db'
+#     }
+#     return mysql.connector.connect(**config)
 
 def create_requested_tools_table(db):
     cursor = db.cursor()
