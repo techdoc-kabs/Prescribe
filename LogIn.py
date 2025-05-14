@@ -4,7 +4,7 @@ import sqlite3
 # from pushbullet import Pushbullet
 from datetime import datetime
 
-API_KEY = st.secrets['push_API_KEY']
+# API_KEY = st.secrets['push_API_KEY']
 # pb = Pushbullet(API_KEY)
 
 def create_connection():
