@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_card import card
 import sqlite3
 import LogIn, SignUp
 import student_forms_page
