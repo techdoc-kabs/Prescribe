@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 import pandas as pd
-import mysql.connector
+# import mysql.connector
 import streamlit as st
 import seaborn as sns
 import random
