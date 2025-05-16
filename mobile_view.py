@@ -56,7 +56,7 @@ if is_mobile:
                     key=item["key"],
                     styles={
                         "card": {
-                            "width": "100%",
+                            "width": "50%",
                             "height": "180px",
                             "border-radius": "15px",
                             "background": f"linear-gradient(135deg, {color}, #ffffff)",
