@@ -3,8 +3,8 @@ import streamlit as st
 import json
 import pandas as pd
 import os
-import mysql.connector
-import appointments
+# import mysql.connector
+# import appointments
 import requested_tools
 from datetime import datetime
 import captured_responses 
