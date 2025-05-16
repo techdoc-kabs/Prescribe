@@ -82,7 +82,7 @@ if is_mobile:
 
 else:
     st.subheader("💻 Desktop View (3 Columns)")
-    cols = st.columns(3)
+    cols = st.columns(4)
     for col, item in zip(cols, card_data):
         color = get_random_color()
         with col:
