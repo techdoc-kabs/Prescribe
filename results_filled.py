@@ -3,7 +3,7 @@ import streamlit as st
 import json
 import pandas as pd
 import os
-# import mysql.connector
+import mysql.connector
 import appointments
 import requested_tools
 from datetime import datetime
@@ -472,9 +472,14 @@ def style_functioning_dataframe(df):
     return styled_df
 
 
-### DRIVER CODE ######
+
+from streamlit_javascript import st_javascript
 def main():
     db = create_connection()
+    screen_width = st_javascript("window.innerWidth", key="screen_width_js") or 1024
+
+    is_mobile = screen_width < 700
+
     if 'appointment_id' in st.session_state:
         appointment_id = st.session_state.appointment_id
         if appointment_id:
@@ -484,53 +489,54 @@ def main():
                 st.warning("No requested tools found.")
                 db.close()
                 return
-            if tools_list:
-                with st.expander(f'📅:red[{appointment_id}]', expanded=False):
-                    tool_tabs = st.tabs(tools_list + ['FUNCTONING', 'SUMMARY RESULTS'])
-                    summary_data = {}
-                    for idx, tool in enumerate(tools_list):
-                        with tool_tabs[idx]:
-                            tool_status = requested_tools_students[tool]
-                            if tool not in tools_template_dict:
-                                st.warning(f"No template available for {tool}")
-                                continue
-                            if tool_status == 'Completed':
-                                pass
-                            else:
-                                st.warning(f"**{tool}** is **Pending** ⏳")
-                            if tool == "PHQ-9" and tool_status == "Completed":
-                                phq9_df = fetch_latest_phq9(db, appointment_id)
-                                if not phq9_df.empty:
-                                    st.table(style_phq9_dataframe(phq9_df))
-                                    summary_data.update(phq9_df.iloc[0].to_dict())
-                                else:
-                                    st.info("No PHQ-9 data available.")
-                            elif tool == "GAD-7" and tool_status == "Completed":
-                                gad7_df = fetch_latest_gad7(db, appointment_id)
-                                if not gad7_df.empty:
-                                    st.table(style_gad7_dataframe(gad7_df))
-                                    summary_data.update(gad7_df.iloc[0].to_dict())
-                                else:
-                                    st.info("No GAD-7 data available.")
-                    with tool_tabs[-2]:
-                        fxn_df = fetch_fxn(db, appointment_id)
-                        if not fxn_df.empty:
-                            styled_df = style_functioning_dataframe(fxn_df)
-                            st.table(styled_df) 
-                        else:
-                            st.info("No Functioning data available.")
+            
+            with st.expander(f'📅:red[{appointment_id}]', expanded=False):
+                tool_tabs = st.tabs(tools_list + ['FUNCTONING', 'SUMMARY RESULTS'])
+                summary_data = {}
 
-                    with tool_tabs[-1]:
-                        if summary_data:
-                            summary_df = generate_summary_dataframe(db, appointment_id)
-    
-                            st.table(summary_df) 
-                        else:
-                            st.info("No completed assessments available for summary.")   
-            else:
-                st.warning(f'No results for {appointment_id}')
+                for idx, tool in enumerate(tools_list):
+                    with tool_tabs[idx]:
+                        tool_status = requested_tools_students[tool]
+                        if tool not in tools_template_dict:
+                            st.warning(f"No template available for {tool}")
+                            continue
+
+                        if tool_status != 'Completed':
+                            st.warning(f"**{tool}** is **Pending** ⏳")
+
+                        if tool == "PHQ-9" and tool_status == "Completed":
+                            phq9_df = fetch_latest_phq9(db, appointment_id)
+                            if not phq9_df.empty:
+                                st.table(style_phq9_dataframe(phq9_df))
+                                summary_data.update(phq9_df.iloc[0].to_dict())
+                            else:
+                                st.info("No PHQ-9 data available.")
+
+                        elif tool == "GAD-7" and tool_status == "Completed":
+                            gad7_df = fetch_latest_gad7(db, appointment_id)
+                            if not gad7_df.empty:
+                                st.table(style_gad7_dataframe(gad7_df))
+                                summary_data.update(gad7_df.iloc[0].to_dict())
+                            else:
+                                st.info("No GAD-7 data available.")
+
+                # Functioning Tab
+                with tool_tabs[-2]:
+                    fxn_df = fetch_fxn(db, appointment_id)
+                    if not fxn_df.empty:
+                        st.table(style_functioning_dataframe(fxn_df))
+                    else:
+                        st.info("No Functioning data available.")
+
+                # Summary Tab
+                with tool_tabs[-1]:
+                    if summary_data:
+                        summary_df = generate_summary_dataframe(db, appointment_id)
+                        st.table(summary_df)
+                    else:
+                        st.info("No completed assessments available for summary.")   
+
     db.close()
+
 if __name__ == "__main__":
     main()
-
-
