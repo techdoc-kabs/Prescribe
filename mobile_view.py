@@ -1,6 +1,6 @@
 import streamlit as st
 from streamlit_card import card
-import mysql.connector
+# import mysql.connector
 import LogIn, SignUp
 import student_tool_page
 import streamlit as st
