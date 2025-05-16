@@ -30,3 +30,4 @@ streamlit_option_menu==0.3.13
 tools==1.0.2
 kaleido>=0.2.1
 XlsxWriter>=3.0.0
+streamlit-javascript==0.1.5
