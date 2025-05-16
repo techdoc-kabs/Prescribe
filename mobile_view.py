@@ -633,10 +633,10 @@ def main():
 
     is_mobile = device_width < 768
     num_cols = 3 if is_mobile else 4
-    card_width = "100%" if is_mobile else "150px"
-    appointment_card_height = "150px" if is_mobile else "150px"
+    card_width = "100%" if is_mobile else "250px"
+    appointment_card_height = "150px" if is_mobile else "220px"
     tool_card_height = "100px" if is_mobile else "150"
-    font_size_title = "25px" if is_mobile else "30px"
+    font_size_title = "20px" if is_mobile else "30px"
     font_size_text = "16px" if is_mobile else "20px"
 
     for key, default in {
