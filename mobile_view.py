@@ -191,42 +191,30 @@ def verify_user(username, password, role):
 
 
 def role_selection():
-    st.markdown("""
-        <style>
-        .card-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        .card-col {
-            flex: 0 0 48%;
-        }
-        @media (min-width: 768px) {
-            .card-col {
-                flex: 0 0 22%;
-            }
-        }
-        </style>
-        <div class="card-row">
-    """, unsafe_allow_html=True)
+    st.subheader("👤 Select Your Role")
 
-    roles = [
-        {"label": "Student", "key": "student_card", "image": "https://img.icons8.com/color/96/student-male--v1.png", "value": "student"},
-        {"label": "Admin", "key": "admin_card", "image": "https://img.icons8.com/color/96/admin-settings-male.png", "value": "admin"},
-        {"label": "Therapist", "key": "therapist_card", "image": "https://img.icons8.com/color/96/psychology.png", "value": "therapist"},
-        {"label": "Super Admin", "key": "superadmin_card", "image": "https://img.icons8.com/color/96/super-mario.png", "value": "superadmin"}
+    # Detect screen width
+    width = st_javascript("window.innerWidth")
+    is_mobile = width is not None and width < 768
+
+    role_cards = [
+        {"title": "Student", "image": "https://img.icons8.com/color/96/student-male--v1.png", "key": "student_card"},
+        {"title": "Admin", "image": "https://img.icons8.com/color/96/admin-settings-male.png", "key": "admin_card"},
+        {"title": "Therapist", "image": "https://img.icons8.com/color/96/psychology.png", "key": "therapist_card"},
+        {"title": "Super Admin", "image": "https://img.icons8.com/color/96/super-mario.png", "key": "superadmin_card"},
     ]
 
-    for role in roles:
-        st.markdown('<div class="card-col">', unsafe_allow_html=True)
-        if card(role["label"], "", image=role["image"], key=role["key"]):
-            st.session_state.role = role["value"]
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+    # 2 columns on mobile, 4 on desktop
+    cols_per_row = 2 if is_mobile else 4
+    rows = [role_cards[i:i+cols_per_row] for i in range(0, len(role_cards), cols_per_row)]
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    for row in rows:
+        cols = st.columns(cols_per_row)
+        for col, item in zip(cols, row):
+            with col:
+                if card(title=item["title"], image=item["image"], key=item["key"]):
+                    st.session_state.role = item["title"].lower().replace(" ", "")
+                    st.rerun()
 
 
 def back_to_main_menu():
