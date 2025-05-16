@@ -92,8 +92,7 @@ def role_selection():
     # 2 columns on mobile, 4 on desktop
     cols_per_row = 2 if is_mobile else 4
     rows = [role_cards[i:i+cols_per_row] for i in range(0, len(role_cards), cols_per_row)]
-
-     for row in rows:
+    for row in rows:
         cols = st.columns(cols_per_row)
         for col, item in zip(cols, row):
             with col:
