@@ -70,11 +70,70 @@
 
 # st.divider()
 # st.caption("🔁 Resize the window or use a phone to see responsive card layout.")
+# import streamlit as st
+# from streamlit_javascript import st_javascript
+# from streamlit_card import card
+# st.set_page_config(page_title="Tight Card Layout", layout="centered")
+
+# st.markdown(
+#     """
+#     <style>
+#     .block-container {
+#         padding-top: 1rem;
+#         padding-bottom: 1rem;
+#     }
+#     .card-wrapper {
+#         margin-bottom: -10px;
+#     }
+#     </style>
+#     """,
+#     unsafe_allow_html=True,
+# )
+
+# st.title("📱💻 Streamlit Cards with Minimal Spacing")
+# width = st_javascript("window.innerWidth")
+# is_mobile = width is not None and width < 768
+# st.info(f"Screen width: {width}px")
+# card_data = [
+#     {"title": "Card 1", "text": "This is card 1", "image": "https://placekitten.com/400/200", "key": "card1"},
+#     {"title": "Card 2", "text": "This is card 2", "image": "https://placekitten.com/401/200", "key": "card2"},
+#     {"title": "Card 3", "text": "This is card 3", "image": "https://placekitten.com/402/200", "key": "card3"},
+# ]
+# response = st.empty()
+# if is_mobile:
+#     st.subheader("📱 Mobile View")
+#     for item in card_data:
+#         with st.container():
+#             with st.markdown('<div class="card-wrapper">', unsafe_allow_html=True):
+#                 result = card(
+#                     title=item["title"],
+#                     text=item["text"],
+#                     image=item["image"],
+#                     key=item["key"],
+#                 )
+#             if result:
+#                 response.success(f"You clicked: {item['title']}")
+# else:
+#     st.subheader("💻 Desktop View")
+#     cols = st.columns([1, 1, 1])
+#     for col, item in zip(cols, card_data):
+#         with col:
+#             with st.markdown('<div class="card-wrapper">', unsafe_allow_html=True):
+#                 result = card(
+#                     title=item["title"],
+#                     text=item["text"],
+#                     image=item["image"],
+#                     key=item["key"],
+#                 )
+#             if result:
+#                 response.success(f"You clicked: {item['title']}")
 import streamlit as st
 from streamlit_javascript import st_javascript
 from streamlit_card import card
-st.set_page_config(page_title="Tight Card Layout", layout="centered")
 
+st.set_page_config(page_title="Tight Card Layout", layout="wide")
+
+# Custom CSS to reduce spacing
 st.markdown(
     """
     <style>
@@ -90,16 +149,36 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.title("📱💻 Streamlit Cards with Minimal Spacing")
+st.title("📱💻 Streamlit Cards with Custom Size")
+
+# Detect screen width
 width = st_javascript("window.innerWidth")
 is_mobile = width is not None and width < 768
 st.info(f"Screen width: {width}px")
+
+# Card data
 card_data = [
     {"title": "Card 1", "text": "This is card 1", "image": "https://placekitten.com/400/200", "key": "card1"},
     {"title": "Card 2", "text": "This is card 2", "image": "https://placekitten.com/401/200", "key": "card2"},
     {"title": "Card 3", "text": "This is card 3", "image": "https://placekitten.com/402/200", "key": "card3"},
 ]
+
 response = st.empty()
+
+# Define dynamic card size based on device
+mobile_styles = {
+    "width": "100%",
+    "height": "200px",
+    "border-radius": "10px",
+    "box-shadow": "0 2px 4px rgba(0,0,0,0.2)"
+}
+desktop_styles = {
+    "width": "100%",
+    "height": "300px",
+    "border-radius": "10px",
+    "box-shadow": "0 2px 6px rgba(0,0,0,0.2)"
+}
+
 if is_mobile:
     st.subheader("📱 Mobile View")
     for item in card_data:
@@ -110,6 +189,7 @@ if is_mobile:
                     text=item["text"],
                     image=item["image"],
                     key=item["key"],
+                    styles=mobile_styles
                 )
             if result:
                 response.success(f"You clicked: {item['title']}")
@@ -124,6 +204,7 @@ else:
                     text=item["text"],
                     image=item["image"],
                     key=item["key"],
+                    styles=desktop_styles
                 )
             if result:
                 response.success(f"You clicked: {item['title']}")
