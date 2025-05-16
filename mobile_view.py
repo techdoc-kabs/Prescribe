@@ -176,7 +176,7 @@ def role_selection():
                             "margin": "0",
                         },
                         "title": {
-                            "font-size": "80px" if is_mobile else "80px",
+                            "font-size": "80px" if is_mobile else "100px",
                             "margin": "0 0 5px 0",
                         },
                         "text": {
