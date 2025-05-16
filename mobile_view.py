@@ -121,7 +121,7 @@ import streamlit as st
 from streamlit_card import card
 import sqlite3
 import bcrypt
-import student_page
+# import student_page
 for key in ["role", "username", "logged_in", "initialized"]:
     if key not in st.session_state:
         st.session_state[key] = None if key in ["role", "username"] else False
