@@ -165,7 +165,7 @@ def role_selection():
                     styles={
                         "card": {
                             "width": "100%",
-                            "height": "150px" if is_mobile else "220px",
+                            "height": "180px" if is_mobile else "220px",
                             "border-radius": "15px",
                             "background": f"linear-gradient(135deg, {color}, #ffffff)",
                             "color": "white",
