@@ -1,5 +1,5 @@
 import streamlit as st
-st.set_page_config(page_title="Responsive Cards", layout="wide")
+# st.set_page_config(page_title="Responsive Cards", layout="wide")
 from streamlit_javascript import st_javascript
 from streamlit_card import card
 import random
