@@ -20,7 +20,7 @@ card_data = [
         "title": "Mental Health",
         "text": "Track screening outcomes",
         "image": "https://placekitten.com/400/200",
-        "url": None,}
+        "url": None,}]
 import streamlit as st
 from streamlit_javascript import st_javascript
 from streamlit_card import card
