@@ -165,7 +165,7 @@ def role_selection():
                     styles={
                         "card": {
                             "width": "100%",
-                            "height": "180px" if is_mobile else "220px",
+                            "height": "150px" if is_mobile else "220px",
                             "border-radius": "15px",
                             "background": f"linear-gradient(135deg, {color}, #ffffff)",
                             "color": "white",
@@ -176,11 +176,11 @@ def role_selection():
                             "margin": "0",
                         },
                         "title": {
-                            "font-size": "40px" if is_mobile else "80px",
+                            "font-size": "80px" if is_mobile else "80px",
                             "margin": "0 0 5px 0",
                         },
                         "text": {
-                            "font-size": "18px" if is_mobile else "30px",
+                            "font-size": "22px" if is_mobile else "30px",
                             "margin": "0",
                         },
                     }
