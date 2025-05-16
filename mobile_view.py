@@ -73,8 +73,6 @@ def verify_user(username, password, role):
 #             st.session_state.role = "superadmin"
 #             st.rerun()
 
-
-
 def role_selection():
     st.subheader("👤 Select Your Role")
 
@@ -83,27 +81,59 @@ def role_selection():
     is_mobile = width is not None and width < 768
 
     role_cards = [
-        {"title": "Student", "image": "https://img.icons8.com/color/96/student-male--v1.png", "key": "student_card"},
-        {"title": "Admin", "image": "https://img.icons8.com/color/96/admin-settings-male.png", "key": "admin_card"},
-        {"title": "Therapist", "image": "https://img.icons8.com/color/96/psychology.png", "key": "therapist_card"},
-        {"title": "Super Admin", "image": "https://img.icons8.com/color/96/super-mario.png", "key": "superadmin_card"},
+        {"title": "Student",      "image": "https://img.icons8.com/color/96/student-male--v1.png", "key": "student_card"},
+        {"title": "Admin",        "image": "https://img.icons8.com/color/96/admin-settings-male.png", "key": "admin_card"},
+        {"title": "Therapist",    "image": "https://img.icons8.com/color/96/psychology.png",        "key": "therapist_card"},
+        {"title": "Super Admin",  "image": "https://img.icons8.com/color/96/super-mario.png",       "key": "superadmin_card"},
     ]
 
     # 2 columns on mobile, 4 on desktop
     cols_per_row = 2 if is_mobile else 4
-    rows = [role_cards[i:i+cols_per_row] for i in range(0, len(role_cards), cols_per_row)]
+    rows = [role_cards[i:i + cols_per_row] for i in range(0, len(role_cards), cols_per_row)]
+
     for row in rows:
         cols = st.columns(cols_per_row)
         for col, item in zip(cols, row):
             with col:
                 if card(
                     title=item["title"],
+                    text="Click to proceed",      # <- use text= instead of content=
                     image=item["image"],
-                    content="Click to proceed",
                     key=item["key"]
                 ):
                     st.session_state.role = item["title"].lower().replace(" ", "")
                     st.rerun()
+
+
+# def role_selection():
+#     st.subheader("👤 Select Your Role")
+
+#     # Detect screen width
+#     width = st_javascript("window.innerWidth")
+#     is_mobile = width is not None and width < 768
+
+#     role_cards = [
+#         {"title": "Student", "image": "https://img.icons8.com/color/96/student-male--v1.png", "key": "student_card"},
+#         {"title": "Admin", "image": "https://img.icons8.com/color/96/admin-settings-male.png", "key": "admin_card"},
+#         {"title": "Therapist", "image": "https://img.icons8.com/color/96/psychology.png", "key": "therapist_card"},
+#         {"title": "Super Admin", "image": "https://img.icons8.com/color/96/super-mario.png", "key": "superadmin_card"},
+#     ]
+
+#     # 2 columns on mobile, 4 on desktop
+#     cols_per_row = 2 if is_mobile else 4
+#     rows = [role_cards[i:i+cols_per_row] for i in range(0, len(role_cards), cols_per_row)]
+#     for row in rows:
+#         cols = st.columns(cols_per_row)
+#         for col, item in zip(cols, row):
+#             with col:
+#                 if card(
+#                     title=item["title"],
+#                     image=item["image"],
+#                     content="Click to proceed",
+#                     key=item["key"]
+#                 ):
+#                     st.session_state.role = item["title"].lower().replace(" ", "")
+#                     st.rerun()
 
 def back_to_main_menu():
     if st.button("⬅️ Back to Main Menu"):
