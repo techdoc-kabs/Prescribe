@@ -1,11 +1,12 @@
 import streamlit as st
-from streamlit_card import card
+st.set_page_config(page_title="Responsive Cards", layout="wide")
 from streamlit_javascript import st_javascript
+from streamlit_card import card
+import random
 import sqlite3
 import bcrypt
 # import student_page
 
-st.set_page_config(page_title="Responsive Cards", layout="wide")
 st.markdown(
     """
     <style>
@@ -18,7 +19,26 @@ st.markdown(
     }
     </style>
     """,
-    unsafe_allow_html=True,)
+    unsafe_allow_html=True,
+)
+
+
+width = st_javascript("window.innerWidth")
+is_mobile = width is not None and width < 768
+st.info(f"Screen width: {width}px")
+
+card_data = [
+    {"title": "📄", "text": "Student", "key": "student_card"},
+    {"title": "🎋", "text": "Therapist",  "key": "therapist_card"},
+    {"title": "👨‍👨‍👦", "text": "Admin",  "key": "admin_card"},
+    {"title": "😎", "text": "Superadmin",  "key": "superadmin_card"},
+]
+
+
+def get_random_color():
+    colors = ["#FF6B6B", "#4ECDC4", "#556270", "#C7F464", "#FFCC5C"]
+    return random.choice(colors)
+
 
 for key in ["role", "username", "logged_in", "initialized"]:
     if key not in st.session_state:
@@ -51,8 +71,6 @@ def initialize_database():
     db.commit()
     db.close()
 
-
-
 def verify_user(username, password, role):
     db = create_connection()
     cursor = db.cursor()
@@ -67,36 +85,6 @@ def verify_user(username, password, role):
     return False
 
 
-def role_selection():
-    st.subheader("👤 Select Your Role")
-
-    # Detect screen width
-    width = st_javascript("window.innerWidth")
-    is_mobile = width is not None and width < 768
-
-    role_cards = [
-        {"title": "Student",      "image": "https://img.icons8.com/color/96/student-male--v1.png", "key": "student_card"},
-        {"title": "Admin",        "image": "https://img.icons8.com/color/96/admin-settings-male.png", "key": "admin_card"},
-        {"title": "Therapist",    "image": "https://img.icons8.com/color/96/psychology.png",        "key": "therapist_card"},
-        {"title": "Super Admin",  "image": "https://img.icons8.com/color/96/super-mario.png",       "key": "superadmin_card"},
-    ]
-
-    # 2 columns on mobile, 4 on desktop
-    cols_per_row = 2 if is_mobile else 4
-    rows = [role_cards[i:i + cols_per_row] for i in range(0, len(role_cards), cols_per_row)]
-
-    for row in rows:
-        cols = st.columns(cols_per_row)
-        for col, item in zip(cols, row):
-            with col:
-                if card(
-                    title=item["title"],
-                    text="Click to proceed",      # <- use text= instead of content=
-                    image=item["image"],
-                    key=item["key"]
-                ):
-                    st.session_state.role = item["title"].lower().replace(" ", "")
-                    st.rerun()
 
 def back_to_main_menu():
     if st.button("⬅️ Back to Main Menu"):
@@ -149,48 +137,65 @@ def show_dashboard(role):
         st.write("This is your dashboard.")
 
 
-def set_custom_background(bg_color="skyblue", sidebar_img=None):
-    page_bg_img = f"""
-        <style>
-        [data-testid="stAppViewContainer"] > .main {{
-            background-color: {bg_color};
-            background-size: 140%;
-            background-position: top left;
-            background-repeat: repeat;
-            background-attachment: local;
-            padding-top: 0px;
-        }}
-        [data-testid="stSidebar"] > div:first-child {{
-            {"background-image: url('data:image/png;base64," + sidebar_img + "');" if sidebar_img else ""}
-            background-position: center; 
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-        }}
-        [data-testid="stHeader"] {{
-            background: rgba(0,0,0,0);
-            padding-top: 0px;
-        }}
-        [data-testid="stToolbar"] {{
-            right: 2rem;
-        }}
-        </style>
-    """
-    st.markdown(page_bg_img, unsafe_allow_html=True)
-import base64
-@st.cache_data
-def get_img_as_base64(file):
-    with open(file, "rb") as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
+def role_selection():
+    card_data = [
+        {"title": "📄", "text": "student",     "key": "student_card"},
+        {"title": "🎋", "text": "therapist",   "key": "therapist_card"},
+        {"title": "👨‍👨‍👦", "text": "admin",      "key": "admin_card"},
+        {"title": "😎", "text": "superadmin",  "key": "superadmin_card"},
+    ]
 
-set_custom_background(bg_color="#111111", sidebar_img=None)
+    def get_random_color():
+        colors = ["#FF6B6B", "#4ECDC4", "#556270", "#C7F464", "#FFCC5C"]
+        return random.choice(colors)
+
+    cols_per_row = 2 if is_mobile else 4
+    rows = [card_data[i:i + cols_per_row] for i in range(0, len(card_data), cols_per_row)]
+
+    for row in rows:
+        cols = st.columns(cols_per_row)
+        for col, item in zip(cols, row):
+            color = get_random_color()
+            with col:
+                clicked = card(
+                    title=item["title"],
+                    text=item["text"].capitalize(),
+                    image=None,
+                    key=item["key"],
+                    styles={
+                        "card": {
+                            "width": "100%",
+                            "height": "180px" if is_mobile else "220px",
+                            "border-radius": "15px",
+                            "background": f"linear-gradient(135deg, {color}, #ffffff)",
+                            "color": "white",
+                            "box-shadow": "0 4px 8px rgba(0, 0, 0, 0.1)",
+                            "border": "1px solid #ccc",
+                            "text-align": "center",
+                            "padding": "10px",
+                            "margin": "0",
+                        },
+                        "title": {
+                            "font-size": "40px" if is_mobile else "80px",
+                            "margin": "0 0 5px 0",
+                        },
+                        "text": {
+                            "font-size": "18px" if is_mobile else "30px",
+                            "margin": "0",
+                        },
+                    }
+                )
+                if clicked:
+                    st.session_state.role = item["text"]
+                    st.rerun()
+
 def main():
     if not st.session_state.initialized:
         initialize_database()
         st.session_state.initialized = True
 
     if st.session_state.role is None:
-        role_selection()
+        role_selection()  # ✅ Handles both mobile and desktop rendering
     elif not st.session_state.logged_in:
         if st.session_state.role == "student":
             student_login()
@@ -198,6 +203,5 @@ def main():
             login_user(st.session_state.role)
     else:
         show_dashboard(st.session_state.role)
-
 if __name__ == "__main__":
     main()
