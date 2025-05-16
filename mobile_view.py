@@ -1,26 +1,26 @@
-# import streamlit as st
-# from streamlit_javascript import st_javascript
-# from streamlit_card import card
+import streamlit as st
+from streamlit_javascript import st_javascript
+from streamlit_card import card
 
-# # Set wide layout
-# st.set_page_config(page_title="Responsive Streamlit Card Demo", layout="wide")
+# Set wide layout
+st.set_page_config(page_title="Responsive Streamlit Card Demo", layout="wide")
 
-# st.title("📱💻 Responsive Streamlit Cards")
+st.title("📱💻 Responsive Streamlit Cards")
 
-# # Detect screen width using JS
-# width = st_javascript("window.innerWidth")
-# is_mobile = width is not None and width < 768
+# Detect screen width using JS
+width = st_javascript("window.innerWidth")
+is_mobile = width is not None and width < 768
 
-# st.info(f"Screen width: {width}px")
-# st.success("Mobile view" if is_mobile else "Desktop view")
+st.info(f"Screen width: {width}px")
+st.success("Mobile view" if is_mobile else "Desktop view")
 
-# # Card data
-# card_data = [
-#     {
-#         "title": "Mental Health",
-#         "text": "Track screening outcomes",
-#         "image": "https://placekitten.com/400/200",
-#         "url": None,
+# Card data
+card_data = [
+    {
+        "title": "Mental Health",
+        "text": "Track screening outcomes",
+        "image": "https://placekitten.com/400/200",
+        "url": None,
 import streamlit as st
 from streamlit_javascript import st_javascript
 from streamlit_card import card
