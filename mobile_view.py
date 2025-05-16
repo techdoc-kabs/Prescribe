@@ -130,10 +130,10 @@
 import streamlit as st
 from streamlit_javascript import st_javascript
 from streamlit_card import card
+import random
 
 st.set_page_config(page_title="Tight Card Layout", layout="wide")
 
-# Custom CSS to reduce spacing
 st.markdown(
     """
     <style>
@@ -142,69 +142,105 @@ st.markdown(
         padding-bottom: 1rem;
     }
     .card-wrapper {
-        margin-bottom: -10px;
+        margin-bottom: 10px;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-st.title("📱💻 Streamlit Cards with Custom Size")
+st.title("📱💻 Streamlit Cards with Custom Styles & Minimal Spacing")
 
-# Detect screen width
 width = st_javascript("window.innerWidth")
 is_mobile = width is not None and width < 768
 st.info(f"Screen width: {width}px")
 
-# Card data
 card_data = [
-    {"title": "Card 1", "text": "This is card 1", "image": "https://placekitten.com/400/200", "key": "card1"},
-    {"title": "Card 2", "text": "This is card 2", "image": "https://placekitten.com/401/200", "key": "card2"},
-    {"title": "Card 3", "text": "This is card 3", "image": "https://placekitten.com/402/200", "key": "card3"},
+    {"title": "📄 Card 1", "text": "This is card 1", "image": "https://placekitten.com/400/200", "key": "card1"},
+    {"title": "📄 Card 2", "text": "This is card 2", "image": "https://placekitten.com/401/200", "key": "card2"},
+    {"title": "📄 Card 3", "text": "This is card 3", "image": "https://placekitten.com/402/200", "key": "card3"},
 ]
 
-response = st.empty()
+def get_random_color():
+    colors = ["#FF6B6B", "#4ECDC4", "#556270", "#C7F464", "#FFCC5C"]
+    return random.choice(colors)
 
-# Define dynamic card size based on device
-mobile_styles = {
-    "width": "100%",
-    "height": "200px",
-    "border-radius": "10px",
-    "box-shadow": "0 2px 4px rgba(0,0,0,0.2)"
-}
-desktop_styles = {
-    "width": "100%",
-    "height": "300px",
-    "border-radius": "10px",
-    "box-shadow": "0 2px 6px rgba(0,0,0,0.2)"
-}
+response = st.empty()
 
 if is_mobile:
     st.subheader("📱 Mobile View")
     for item in card_data:
+        color = get_random_color()
         with st.container():
             with st.markdown('<div class="card-wrapper">', unsafe_allow_html=True):
-                result = card(
+                clicked = card(
                     title=item["title"],
                     text=item["text"],
                     image=item["image"],
                     key=item["key"],
-                    styles=mobile_styles
+                    styles={
+                        "card": {
+                            "width": "100%",
+                            "height": "220px",
+                            "border-radius": "20px",
+                            "background": f"linear-gradient(135deg, {color}, #ffffff)",
+                            "color": "white",
+                            "box-shadow": "0 4px 8px rgba(0, 0, 0, 0.15)",
+                            "border": "1px solid #ddd",
+                            "text-align": "center",
+                            "padding": "15px",
+                            "margin": "0",
+                        },
+                        "title": {
+                            "font-family": "sans-serif",
+                            "font-size": "40px",
+                            "margin": "0 0 10px 0",
+                        },
+                        "text": {
+                            "font-family": "sans-serif",
+                            "font-size": "20px",
+                            "margin": "0",
+                        },
+                    }
                 )
-            if result:
+            if clicked:
                 response.success(f"You clicked: {item['title']}")
 else:
     st.subheader("💻 Desktop View")
-    cols = st.columns([1, 1, 1])
+    cols = st.columns(3)
     for col, item in zip(cols, card_data):
+        color = get_random_color()
         with col:
             with st.markdown('<div class="card-wrapper">', unsafe_allow_html=True):
-                result = card(
+                clicked = card(
                     title=item["title"],
                     text=item["text"],
                     image=item["image"],
                     key=item["key"],
-                    styles=desktop_styles
+                    styles={
+                        "card": {
+                            "width": "100%",
+                            "height": "280px",
+                            "border-radius": "20px",
+                            "background": f"linear-gradient(135deg, {color}, #ffffff)",
+                            "color": "white",
+                            "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.2)",
+                            "border": "1px solid #bbb",
+                            "text-align": "center",
+                            "padding": "20px",
+                            "margin": "0",
+                        },
+                        "title": {
+                            "font-family": "sans-serif",
+                            "font-size": "50px",
+                            "margin": "0 0 15px 0",
+                        },
+                        "text": {
+                            "font-family": "sans-serif",
+                            "font-size": "22px",
+                            "margin": "0",
+                        },
+                    }
                 )
-            if result:
+            if clicked:
                 response.success(f"You clicked: {item['title']}")
