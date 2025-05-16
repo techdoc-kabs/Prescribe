@@ -180,7 +180,7 @@ def role_selection():
                             "margin": "0 0 5px 0",
                         },
                         "text": {
-                            "font-size": "22px" if is_mobile else "30px",
+                            "font-size": "25px" if is_mobile else "30px",
                             "margin": "0",
                         },
                     }
