@@ -1,12 +1,25 @@
-
-
-
 import streamlit as st
 from streamlit_card import card
 from streamlit_javascript import st_javascript
 import sqlite3
 import bcrypt
 # import student_page
+
+st.set_page_config(page_title="Responsive Cards", layout="wide")
+st.markdown(
+    """
+    <style>
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    .card-wrapper {
+        margin-bottom: 10px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,)
+
 for key in ["role", "username", "logged_in", "initialized"]:
     if key not in st.session_state:
         st.session_state[key] = None if key in ["role", "username"] else False
@@ -53,25 +66,6 @@ def verify_user(username, password, role):
             st.error("⚠️ Password format issue. Please reset.")
     return False
 
-# def role_selection():
-#     col1, col2 = st.columns(2)
-#     with col1:
-#         if card("Student", "", image="https://img.icons8.com/color/96/student-male--v1.png", key="student_card"):
-#             st.session_state.role = "student"
-#             st.rerun()
-
-#         if card("Admin", "", image="https://img.icons8.com/color/96/admin-settings-male.png", key="admin_card"):
-#             st.session_state.role = "admin"
-#             st.rerun()
-
-#     with col2:
-#         if card("Therapist", "", image="https://img.icons8.com/color/96/psychology.png", key="therapist_card"):
-#             st.session_state.role = "therapist"
-#             st.rerun()
-
-#         if card("Super Admin", "", image="https://img.icons8.com/color/96/super-mario.png", key="superadmin_card"):
-#             st.session_state.role = "superadmin"
-#             st.rerun()
 
 def role_selection():
     st.subheader("👤 Select Your Role")
@@ -103,37 +97,6 @@ def role_selection():
                 ):
                     st.session_state.role = item["title"].lower().replace(" ", "")
                     st.rerun()
-
-
-# def role_selection():
-#     st.subheader("👤 Select Your Role")
-
-#     # Detect screen width
-#     width = st_javascript("window.innerWidth")
-#     is_mobile = width is not None and width < 768
-
-#     role_cards = [
-#         {"title": "Student", "image": "https://img.icons8.com/color/96/student-male--v1.png", "key": "student_card"},
-#         {"title": "Admin", "image": "https://img.icons8.com/color/96/admin-settings-male.png", "key": "admin_card"},
-#         {"title": "Therapist", "image": "https://img.icons8.com/color/96/psychology.png", "key": "therapist_card"},
-#         {"title": "Super Admin", "image": "https://img.icons8.com/color/96/super-mario.png", "key": "superadmin_card"},
-#     ]
-
-#     # 2 columns on mobile, 4 on desktop
-#     cols_per_row = 2 if is_mobile else 4
-#     rows = [role_cards[i:i+cols_per_row] for i in range(0, len(role_cards), cols_per_row)]
-#     for row in rows:
-#         cols = st.columns(cols_per_row)
-#         for col, item in zip(cols, row):
-#             with col:
-#                 if card(
-#                     title=item["title"],
-#                     image=item["image"],
-#                     content="Click to proceed",
-#                     key=item["key"]
-#                 ):
-#                     st.session_state.role = item["title"].lower().replace(" ", "")
-#                     st.rerun()
 
 def back_to_main_menu():
     if st.button("⬅️ Back to Main Menu"):
