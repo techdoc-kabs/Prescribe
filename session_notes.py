@@ -194,6 +194,84 @@ def update_session_note(conn, appointment_id, updated_note):
         return {"success": False, "message": str(e)}
 
 from streamlit_option_menu import option_menu
+
+def display_session_notes(note):
+    st.markdown("""
+        <style>
+            .preview-container {
+                background-color: #EAEAEA;
+                border: 2px solid #B0B0B0;
+                padding: 15px;
+                border-radius: 20px;
+                box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+                margin-bottom: 15px;
+                max-width: 100%;
+            }
+            .header {
+                font-family: 'Times New Roman', serif;
+                font-size: 22px;
+                font-weight: bold;
+                color: #222;
+                margin-bottom: 15px;
+                text-align: center;
+            }
+            .line {
+                display: flex;
+                flex-wrap: wrap;
+                margin-bottom: 10px;
+            }
+            .label {
+                font-family: 'Times New Roman', serif;
+                font-size: 16px;
+                font-weight: bold;
+                color: #0056b3;
+                font-style: italic;
+                flex: 0 0 180px;
+                margin-right: 10px;
+            }
+            .text {
+                font-family: 'Times New Roman', serif;
+                font-size: 16px;
+                color: #333;
+                font-style: italic;
+                flex: 1;
+                word-break: break-word;
+            }
+
+            @media screen and (max-width: 600px) {
+                .label {
+                    flex: 0 0 100%;
+                    margin-bottom: 5px;
+                }
+                .text {
+                    flex: 0 0 100%;
+                }
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    appointment_date = note.get("appointment_date", "N/A")
+    appointment_time = note.get("appointment_time", "N/A")
+    try:
+        formatted_time = datetime.strptime(appointment_time, "%H:%M:%S").strftime("%H:%M")
+    except:
+        formatted_time = appointment_time
+
+    st.markdown(f"""
+        <div class="preview-container">
+            <div class="header">📌 SESSION NOTE PREVIEW</div>
+            <div class="line"><span class="label">🕐 Date & Time:</span><span class="text">{appointment_date} at {formatted_time}</span></div>
+            <div class="line"><span class="label">🗨️ Current Concerns:</span><span class="text">{note.get('current_concerns')}</span></div>
+            <div class="line"><span class="label">🧾 Case Summary:</span><span class="text">{note.get('case_summary')}</span></div>
+            <div class="line"><span class="label">🧠 Working Diagnosis:</span><span class="text">{note.get('working_diagnosis')}</span></div>
+            <div class="line"><span class="label">🧩 Intervention:</span><span class="text">{note.get('intervention')}</span></div>
+            <div class="line"><span class="label">📅 Follow-Up:</span><span class="text">{note.get('follow_up')}</span></div>
+            <div class="line"><span class="label">🔁 Referral Plan:</span><span class="text">{note.get('refer')}</span></div>
+            <div class="line"><span class="label">📝 Remarks:</span><span class="text">{note.get('remarks')}</span></div>
+            <div class="line"><span class="label">👤 Clinician:</span><span class="text">{note.get('clinician_name')}</span></div>
+        </div>
+    """, unsafe_allow_html=True)
+
 def main():
     db = create_connection()
     create_session_notes_table(db)
