@@ -7,7 +7,7 @@ import streamlit as st
 import base64
 import os
 import get_help
-from mysql.connector import Error
+# from mysql.connector import Error
 import datetime
 from datetime import datetime
 import sqlite3
