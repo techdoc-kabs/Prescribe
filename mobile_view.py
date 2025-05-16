@@ -17,7 +17,7 @@ st.markdown(
         padding-bottom: 1rem;
     }
     .card-wrapper {
-        margin-bottom: 10px;
+        margin-bottom: 1px;
     }
     </style>
     """,
