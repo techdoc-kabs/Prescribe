@@ -1,3 +1,14 @@
+import streamlit as st
+# st.set_page_config(page_title="Responsive Cards", layout="centered")
+from streamlit_javascript import st_javascript
+from streamlit_card import card
+import random
+import sqlite3
+import bcrypt
+
+
+
+
 st.markdown(
     """
     <style>
