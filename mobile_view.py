@@ -73,7 +73,7 @@
 import streamlit as st
 from streamlit_javascript import st_javascript
 from streamlit_card import card
-st.set_page_config(page_title="Tight Card Layout", layout="wide")
+st.set_page_config(page_title="Tight Card Layout", layout="centered")
 
 st.markdown(
     """
