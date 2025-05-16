@@ -93,14 +93,18 @@ def role_selection():
     cols_per_row = 2 if is_mobile else 4
     rows = [role_cards[i:i+cols_per_row] for i in range(0, len(role_cards), cols_per_row)]
 
-    for row in rows:
+     for row in rows:
         cols = st.columns(cols_per_row)
         for col, item in zip(cols, row):
             with col:
-                if card(title=item["title"], image=item["image"], key=item["key"]):
+                if card(
+                    title=item["title"],
+                    image=item["image"],
+                    content="Click to proceed",
+                    key=item["key"]
+                ):
                     st.session_state.role = item["title"].lower().replace(" ", "")
                     st.rerun()
-
 
 def back_to_main_menu():
     if st.button("⬅️ Back to Main Menu"):
