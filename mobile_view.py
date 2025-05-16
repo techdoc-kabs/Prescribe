@@ -180,8 +180,8 @@ if is_mobile:
                     key=item["key"],
                     styles={
                         "card": {
-                            "width": "100%",
-                            "height": "220px",
+                            "width": "90%",
+                            "height": "150px",
                             "border-radius": "20px",
                             "background": f"linear-gradient(135deg, {color}, #ffffff)",
                             "color": "white",
