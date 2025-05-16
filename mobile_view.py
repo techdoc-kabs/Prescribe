@@ -618,7 +618,7 @@ def main():
         """
         <style>
         .card-wrapper {
-            margin-bottom: 12px;
+            margin-bottom: 2px;
         }
         </style>
         """,
