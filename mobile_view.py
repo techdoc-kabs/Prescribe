@@ -381,6 +381,23 @@ response_modules = {
 from streamlit_javascript import st_javascript
 
 
+st.markdown(
+    """
+    <style>
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    .card-wrapper {
+        margin-bottom: 10px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+
 def main():
     db = create_connection()
     create_functioning_responses_table()
