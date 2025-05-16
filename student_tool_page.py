@@ -17,22 +17,49 @@ import sqlite3
 import session_notes
 
 
-
 st.markdown("""
     <style>
     .block-container {
         padding-top: 1rem;
         padding-bottom: 1rem;
     }
-    .element-container {
-        padding: 0 !important;
-        margin: 0 !important;
+    .responsive-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 8px;
     }
-    div[data-testid="column"] {
-        padding: 0.25rem !important;
+    .responsive-card {
+        flex: 1 1 calc(50% - 8px); /* 2 columns mobile */
+        max-width: calc(50% - 8px);
+        margin-bottom: 12px;
+    }
+    @media (min-width: 768px) {
+        .responsive-card {
+            flex: 1 1 calc(25% - 8px); /* 4 columns desktop */
+            max-width: calc(25% - 8px);
+        }
     }
     </style>
 """, unsafe_allow_html=True)
+
+
+
+# st.markdown("""
+#     <style>
+#     .block-container {
+#         padding-top: 1rem;
+#         padding-bottom: 1rem;
+#     }
+#     .element-container {
+#         padding: 0 !important;
+#         margin: 0 !important;
+#     }
+#     div[data-testid="column"] {
+#         padding: 0.25rem !important;
+#     }
+#     </style>
+# """, unsafe_allow_html=True)
 
 def set_background(image_path, width="500px", height="500px", border_color="orange", border_width="5px"):
     try:
@@ -446,9 +473,9 @@ response_modules = {
 
 #### MAIN CODE ####
 def main():
-
+    st.markdown('<div class="responsive-grid">', unsafe_allow_html=True)
     width = st_javascript("window.innerWidth")
-    is_mobile = width is not None and width < 768
+    is_mobile = width is not None and width < 700
     num_cols = 2 if is_mobile else 4
     cols = st.columns(num_cols, gap="small")  # gap="small" minimizes space
 
@@ -538,9 +565,7 @@ def main():
                 #             if hasClicked:
                 #                 st.session_state.selected_tool = tool
                 #                 st.rerun()
-                for idx, tool in enumerate(tools_list):
-                    # Determine tool status and image (same logic as your original)
-
+                for tool in tools_list:
                     if tool == "FUNCTIONING":
                         tool_status = check_functioning_completed(db, appointment_id)
                         tool_status = "Completed" if tool_status and tool_status[0] else "Pending"
@@ -554,48 +579,47 @@ def main():
                             encoded = base64.b64encode(data).decode("utf-8")
                             image_data = f"data:image/png;base64,{encoded}"
                     except FileNotFoundError:
-                        image_data = None 
+                        image_data = None
 
-                    with cols[idx % num_cols]:  # Dynamic column
-                        if tool == "PROFILE":
-                            display_text = "Update"
-                            text_color = "blue"
-                        elif tool_status == "Completed":
-                            display_text = "Completed ✅"
-                            text_color = "green"
-                        else:
-                            display_text = "Pending ⏳"
-                            text_color = "orange"
+                    display_text = "Update" if tool == "PROFILE" else \
+                                   ("Completed ✅" if tool_status == "Completed" else "Pending ⏳")
+                    text_color = "blue" if tool == "PROFILE" else \
+                                 ("green" if tool_status == "Completed" else "orange")
 
-                        hasClicked = card(
-                            title=tool,
-                            text=f"{display_text}",
-                            image=image_data,
-                            url=None,
-                            styles={
-                                "card": {
-                                    "width": "100%",  # Stretch to fill column
-                                    "height": "180px" if is_mobile else "200px",
-                                    "border-radius": "20px",
-                                    "background-color": tool_colors.get(tool, "#ccc"),
-                                    "color": "white",
-                                    "box-shadow": "0 4px 8px rgba(0, 0, 0, 0.15)",
-                                    "border": "2px solid #600000",
-                                    "margin": "0px",
-                                },
-                                "text": {
-                                    "font-family": "serif",
-                                    "font-size": "16px" if is_mobile else "18px"
-                                },
-                                "title": {
-                                    "font-size": "18px" if is_mobile else "24px"
-                                }
+                    st.markdown('<div class="responsive-card">', unsafe_allow_html=True)
+                    hasClicked = card(
+                        title=tool,
+                        text=display_text,
+                        image=image_data,
+                        url=None,
+                        styles={
+                            "card": {
+                                "width": "100%",
+                                "height": "180px",
+                                "border-radius": "20px",
+                                "background-color": tool_colors.get(tool, "#999999"),
+                                "color": "white",
+                                "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.1)",
+                                "border": "2px solid #600000",
+                                "margin": "0px",
+                            },
+                            "text": {
+                                "font-family": "serif",
+                                "font-size": "14px",
+                                "color": text_color,
+                            },
+                            "title": {
+                                "font-size": "20px"
                             }
-                        )
+                        }
+                    )
+                    st.markdown('</div>', unsafe_allow_html=True)
 
-                        if hasClicked:
-                            st.session_state.selected_tool = tool
-                            st.rerun()
+                    if hasClicked:
+                        st.session_state.selected_tool = tool
+                        st.rerun()
+
+                # st.markdown('</div>', unsafe_allow_html=True)
 
                 else:
                     selected_tool = st.session_state.selected_tool
