@@ -93,7 +93,7 @@ else:
                 key=item["key"],
                 styles={
                     "card": {
-                        "width": "50%",
+                        "width": "100%",
                         "height": "220px",
                         "border-radius": "20px",
                         "background": f"linear-gradient(135deg, {color}, #ffffff)",
