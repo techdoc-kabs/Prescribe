@@ -244,27 +244,27 @@
 #                 )
 #             if clicked:
 #                 response.success(f"You clicked: {item['title']}")
-# import streamlit as st
-# from streamlit_javascript import st_javascript
-# from streamlit_card import card
-# import random
+import streamlit as st
+from streamlit_javascript import st_javascript
+from streamlit_card import card
+import random
 
-# st.set_page_config(page_title="Responsive Cards", layout="wide")
+st.set_page_config(page_title="Responsive Cards", layout="wide")
 
-# st.markdown(
-#     """
-#     <style>
-#     .block-container {
-#         padding-top: 1rem;
-#         padding-bottom: 1rem;
-#     }
-#     .card-wrapper {
-#         margin-bottom: 10px;
-#     }
-#     </style>
-#     """,
-#     unsafe_allow_html=True,
-# )
+st.markdown(
+    """
+    <style>
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    .card-wrapper {
+        margin-bottom: 10px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 st.title("📱💻 Responsive Streamlit Cards (2-column mobile view)")
 
