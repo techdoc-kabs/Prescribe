@@ -12,8 +12,27 @@ from streamlit_card import card
 import sqlite3
 import bcrypt
 from streamlit_option_menu import option_menu
-
+import phq9_responses, gad7_responses, results_filled, stud_render_tools, clinical_notes
+import sqlite3
 import session_notes
+
+
+
+st.markdown("""
+    <style>
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    .element-container {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    div[data-testid="column"] {
+        padding: 0.25rem !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 def set_background(image_path, width="500px", height="500px", border_color="orange", border_width="5px"):
     try:
@@ -64,12 +83,7 @@ tool_modules = {
 }
 
 
-def table_exists(db, table_name):
-    cursor = db.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
-    result = cursor.fetchone()
-    cursor.close()
-    return result is not None
+
 
 def fetch_requested_tools(db, appointment_id):
     table_name = "requested_tools_students"
@@ -217,15 +231,6 @@ def get_requested_tools(db, appointment_id):
 def create_functioning_responses_table():
     db = sqlite3.connect("mhpss_db.sqlite")
     cursor = db.cursor()
-    # create_table_query = """
-    # CREATE TABLE IF NOT EXISTS functioning_responses (
-    #     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    #     appointment_id TEXT NOT NULL,
-    #     student_id TEXT NOT NULL,
-    #     difficulty_level TEXT NOT NULL CHECK(difficulty_level IN ('Not difficult at all', 'Somewhat difficult', 'Very difficult', 'Extremely difficult')),
-    #     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    # );
-    # """
     create_table_query = """
         CREATE TABLE IF NOT EXISTS functioning_responses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -253,22 +258,6 @@ def check_functioning_completed(db, appointment_id):
     result = cursor.fetchone()
     cursor.close()
     return result
-
-# def insert_functioning_response(db, appointment_id, student_id, difficulty_level):
-#     cursor = db.cursor()
-#     insert_query = """
-#     INSERT INTO functioning_responses (appointment_id, student_id, difficulty_level)
-#     VALUES (?, ?, ?)
-#     """
-#     try:
-#         cursor.execute(insert_query, (appointment_id, student_id, difficulty_level))
-#         db.commit()
-#         return True
-#     except Exception as err:
-#         st.error(f"Error inserting response: {err}")
-#         return False
-#     finally:
-#         cursor.close()
 
 def insert_functioning_response(db, appointment_id, student_id, difficulty_level):
     cursor = db.cursor()
@@ -413,34 +402,56 @@ def ordinal(n):
         suffix = {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
     return f"{n}{suffix}"
 
-import phq9_responses, gad7_responses, results_filled, stud_render_tools, clinical_notes
+
 response_modules = {
     'PHQ-9': phq9_responses.main,
     'GAD-7':gad7_responses.main,
-    'Functioning': 'Noted'
-}
-
-import sqlite3
-
-# def add_fnx_score_column():
-#     db = sqlite3.connect("mhpss_db.sqlite")
-#     cursor = db.cursor()
-#     try:
-#         # Try adding the column
-#         cursor.execute("ALTER TABLE functioning_responses ADD COLUMN fnx_score INTEGER")
-#         db.commit()
-#         print("Column 'fnx_score' added successfully.")
-#     except sqlite3.OperationalError as e:
-#         # This error likely means the column already exists
-#         print(f"Error (probably column exists): {e}")
-#     finally:
-#         cursor.close()
-#         db.close()
+    'Functioning': 'Noted'}
 
 
 
+# from streamlit_javascript import st_javascript
+# st.markdown(
+#     """
+#     <style>
+#     .block-container {
+#         padding-top: 1rem;
+#         padding-bottom: 1rem;
+#     }
+#     .card-wrapper {
+#         margin-bottom: 10px;
+#     }
+#     </style>
+#     """,
+#     unsafe_allow_html=True,
+# )
 
+# width = st_javascript("window.innerWidth")
+# is_mobile = width is not None and width < 768
+# card_data = [
+#     {"title": "📄", "text": "Student", "key": "student_card"},
+#     {"title": "🎋", "text": "Therapist",  "key": "therapist_card"},
+#     {"title": "👨‍👨‍👦", "text": "Admin",  "key": "admin_card"},
+#     {"title": "😎", "text": "Superadmin",  "key": "superadmin_card"},
+# ]
+
+#  is_mobile = device_width < 768
+#     num_cols = 3 if is_mobile else 4
+#     card_width = "100%" if is_mobile else "250px"
+#     appointment_card_height = "150px" if is_mobile else "220px"
+#     tool_card_height = "100px" if is_mobile else "150"
+#     font_size_title = "20px" if is_mobile else "30px"
+#     font_size_text = "16px" if is_mobile else "20px"
+
+
+#### MAIN CODE ####
 def main():
+
+    width = st_javascript("window.innerWidth")
+    is_mobile = width is not None and width < 768
+    num_cols = 2 if is_mobile else 4
+    cols = st.columns(num_cols, gap="small")  # gap="small" minimizes space
+
     db = create_connection()
     create_functioning_responses_table()
     if "student_id" in st.session_state:
@@ -471,62 +482,120 @@ def main():
                 tool_colors = {}
                 tool_images = {}
                 
-                for tool in tools_list:
-                    tool_colors[tool] = f"#{hex(hash(tool) % 0xFFFFFF)[2:].zfill(6)}"  # Unique color based on hash
-                    tool_images[tool] = f"images/{tool.lower()}.png"
+                # for tool in tools_list:
+                #     tool_colors[tool] = f"#{hex(hash(tool) % 0xFFFFFF)[2:].zfill(6)}"  # Unique color based on hash
+                #     tool_images[tool] = f"images/{tool.lower()}.png"
 
-                if st.session_state.selected_tool is None:
-                    cols = st.columns(2)
+                # if st.session_state.selected_tool is None:
+                #     cols = st.columns(2)
                     
-                    for idx, tool in enumerate(tools_list):
-                        if tool == "FUNCTIONING":
-                            tool_status = check_functioning_completed(db, appointment_id)
-                            tool_status = "Completed" if tool_status and tool_status[0] else "Pending"
-                        else:
-                            tool_status = requested_tools.get(tool, "Pending")  # ✅ Restore original behavior
+                #     for idx, tool in enumerate(tools_list):
+                #         if tool == "FUNCTIONING":
+                #             tool_status = check_functioning_completed(db, appointment_id)
+                #             tool_status = "Completed" if tool_status and tool_status[0] else "Pending"
+                #         else:
+                #             tool_status = requested_tools.get(tool, "Pending")  # ✅ Restore original behavior
 
-                        image_path = tool_images.get(tool, "brain.gif")  # Fallback image
+                #         image_path = tool_images.get(tool, "brain.gif")  # Fallback image
                         
-                        try:
-                            with open(image_path, "rb") as f:
-                                data = f.read()
-                                encoded = base64.b64encode(data).decode("utf-8")
-                                image_data = f"data:image/png;base64,{encoded}"
-                        except FileNotFoundError:
-                            image_data = None 
+                #         try:
+                #             with open(image_path, "rb") as f:
+                #                 data = f.read()
+                #                 encoded = base64.b64encode(data).decode("utf-8")
+                #                 image_data = f"data:image/png;base64,{encoded}"
+                #         except FileNotFoundError:
+                #             image_data = None 
                     
-                        with cols[idx % 2]:  
-                            if tool == "PROFILE":
-                                display_text = "Update"
-                                text_color = "blue"
-                            elif tool_status == "Completed":
-                                display_text = "Completed ✅"
-                                text_color = "green" 
-                            else:
-                                display_text = "Pending ⏳"
-                                text_color = "orange"
+                #         with cols[idx % 2]:  
+                #             if tool == "PROFILE":
+                #                 display_text = "Update"
+                #                 text_color = "blue"
+                #             elif tool_status == "Completed":
+                #                 display_text = "Completed ✅"
+                #                 text_color = "green" 
+                #             else:
+                #                 display_text = "Pending ⏳"
+                #                 text_color = "orange"
 
-                            hasClicked = card(
-                                title=tool,
-                                text=f"{display_text}",
-                                image=image_data,
-                                url=None, 
-                                styles={
-                                    "card": {
-                                        "width": "280px",
-                                        "height": "200px",
-                                        "border-radius": "30px",
-                                        "background-color": tool_colors.get(tool, "lightgray"),  # Use dynamic color
-                                        "color": "white",
-                                        "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.15)",
-                                        "border": "2px solid #600000"
-                                    },
-                                    "text": {"font-family": "serif"},
-                                } 
-                            )
-                            if hasClicked:
-                                st.session_state.selected_tool = tool
-                                st.rerun()
+                #             hasClicked = card(
+                #                 title=tool,
+                #                 text=f"{display_text}",
+                #                 image=image_data,
+                #                 url=None, 
+                #                 styles={
+                #                     "card": {
+                #                         "width": "280px",
+                #                         "height": "200px",
+                #                         "border-radius": "30px",
+                #                         "background-color": tool_colors.get(tool, "lightgray"),  # Use dynamic color
+                #                         "color": "white",
+                #                         "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.15)",
+                #                         "border": "2px solid #600000"
+                #                     },
+                #                     "text": {"font-family": "serif"},
+                #                 } 
+                #             )
+                #             if hasClicked:
+                #                 st.session_state.selected_tool = tool
+                #                 st.rerun()
+                for idx, tool in enumerate(tools_list):
+                    # Determine tool status and image (same logic as your original)
+
+                    if tool == "FUNCTIONING":
+                        tool_status = check_functioning_completed(db, appointment_id)
+                        tool_status = "Completed" if tool_status and tool_status[0] else "Pending"
+                    else:
+                        tool_status = requested_tools.get(tool, "Pending")
+
+                    image_path = tool_images.get(tool, "brain.gif")
+                    try:
+                        with open(image_path, "rb") as f:
+                            data = f.read()
+                            encoded = base64.b64encode(data).decode("utf-8")
+                            image_data = f"data:image/png;base64,{encoded}"
+                    except FileNotFoundError:
+                        image_data = None 
+
+                    with cols[idx % num_cols]:  # Dynamic column
+                        if tool == "PROFILE":
+                            display_text = "Update"
+                            text_color = "blue"
+                        elif tool_status == "Completed":
+                            display_text = "Completed ✅"
+                            text_color = "green"
+                        else:
+                            display_text = "Pending ⏳"
+                            text_color = "orange"
+
+                        hasClicked = card(
+                            title=tool,
+                            text=f"{display_text}",
+                            image=image_data,
+                            url=None,
+                            styles={
+                                "card": {
+                                    "width": "100%",  # Stretch to fill column
+                                    "height": "180px" if is_mobile else "200px",
+                                    "border-radius": "20px",
+                                    "background-color": tool_colors.get(tool, "#ccc"),
+                                    "color": "white",
+                                    "box-shadow": "0 4px 8px rgba(0, 0, 0, 0.15)",
+                                    "border": "2px solid #600000",
+                                    "margin": "0px",
+                                },
+                                "text": {
+                                    "font-family": "serif",
+                                    "font-size": "16px" if is_mobile else "18px"
+                                },
+                                "title": {
+                                    "font-size": "18px" if is_mobile else "24px"
+                                }
+                            }
+                        )
+
+                        if hasClicked:
+                            st.session_state.selected_tool = tool
+                            st.rerun()
 
                 else:
                     selected_tool = st.session_state.selected_tool
