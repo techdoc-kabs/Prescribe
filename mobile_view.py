@@ -1,13 +1,13 @@
 import streamlit as st
 from streamlit_card import card
-# import mysql.connector
+import mysql.connector
 import LogIn, SignUp
 import student_tool_page
 import streamlit as st
 import base64
 import os
-# import get_help
-# from mysql.connector import Error
+import get_help
+from mysql.connector import Error
 import datetime
 from datetime import datetime
 import sqlite3
@@ -711,26 +711,19 @@ def update_user_session_logout(student_id):
 
 # if __name__ == "__main__":
 #     main()
+
+
 from streamlit_javascript import st_javascript
-
-
 def main():
-    
-    # Get screen width for responsiveness
     screen_width = st_javascript("window.innerWidth", key="screen_width_key")
     is_mobile = screen_width < 750 if screen_width else False  
-
     set_custom_background(bg_color="#2c3e50", sidebar_img=None)
     create_user_sessions_table()
-
     if 'student_name' not in st.session_state:
         st.session_state.student_name = ''
-
     page_menu = get_menu()
-
     if st.session_state.get("username"):
         st.sidebar.success(f'👋 Hi :orange[{st.session_state["username"]}]')
-
         student_info = fetch_student_record(st.session_state["username"])
         if student_info is None:
             st.error("Student record not found.")
