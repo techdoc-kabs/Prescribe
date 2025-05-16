@@ -379,13 +379,25 @@ response_modules = {
 
 
 from streamlit_javascript import st_javascript
+
+
 def main():
     db = create_connection()
     create_functioning_responses_table()
+
+    # Detect screen width for responsive design
     device_width = st_javascript("window.innerWidth", key="device_width")
     if device_width is None:
         st.stop()
-    num_cols = 3 if device_width <= 768 else 4
+
+    is_mobile = device_width <= 768
+    num_cols = 3 if is_mobile else 4
+    card_width = "100%" if is_mobile else "150px"
+    appointment_card_height = "200px" if is_mobile else "150px"
+    tool_card_height = "150px"
+    font_size_title = "25px" if is_mobile else "25px"
+    font_size_text = "16px" if is_mobile else "13px"
+
     for key, default in {
         "selected_record": None,
         "selected_appointment": None,
@@ -432,6 +444,7 @@ def main():
             fetch_appointment_details_by_name(selected_record['name']),
             key=lambda x: (x["appointment_date"], x["appointment_time"]),
             reverse=True)
+
         if st.session_state.selected_appointment is None:
             if appointment_details:
                 cols = st.columns(num_cols)
@@ -450,8 +463,8 @@ def main():
                             url=None,
                             styles={
                                 "card": {
-                                    "width": "100%" if device_width <= 768 else "150px",
-                                    "height": "150px",
+                                    "width": card_width,
+                                    "height": appointment_card_height,
                                     "margin": "10px 0px",
                                     "border-radius": "30px",
                                     "background": appointment_color,
@@ -460,11 +473,10 @@ def main():
                                     "border": "1px solid red",
                                     "text-align": "center",
                                 },
-                                "text": {"font-family": "serif", "font-size": 12},
-                                "title": {"font-family": "serif", "font-size": 20}
+                                "text": {"font-family": "serif", "font-size": font_size_text},
+                                "title": {"font-family": "serif", "font-size": font_size_title}
                             },
                         )
-
                         if hasClicked:
                             st.session_state.selected_appointment = appointment
                             st.session_state.appointment_id = appointment_id
@@ -490,12 +502,8 @@ def main():
             if task_reslt == 'Screen':
                 tool_status_list = get_requested_tools(db, appointment_id)
                 requested_tools = fetch_requested_tools(db, appointment_id)
-                tools_list = list(requested_tools)
-                if not tools_list:
-                    st.warning("No requested tools found.")
-                    db.close()
-                    return
-                tools_list = tools_list + ["Functioning"]
+                tools_list = list(requested_tools) + ["Functioning"]
+
                 tool_colors = {tool: f"#{hex(hash(tool) % 0xFFFFFF)[2:].zfill(6)}" for tool in tools_list}
                 tool_images = {tool: f"images/{tool.lower()}.png" for tool in tools_list}
 
@@ -528,8 +536,8 @@ def main():
                             url=None,
                             styles={
                                 "card": {
-                                    "width": "100%" if device_width <= 768 else "150px",
-                                    "height": "100px",
+                                    "width": card_width,
+                                    "height": tool_card_height,
                                     "margin": "10px 0px",
                                     "border-radius": "30px",
                                     "border-color": "red",
@@ -538,8 +546,8 @@ def main():
                                     "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.15)",
                                     "border": "2px solid #600000"
                                 },
-                                "text": {"font-family": "serif", "font-size": 11},
-                                "title": {"font-family": "serif", "font-size": 20}
+                                "text": {"font-family": "serif", "font-size": font_size_text},
+                                "title": {"font-family": "serif", "font-size": font_size_title}
                             })
 
                         if hasClicked:
@@ -582,8 +590,5 @@ def main():
                         st.success(f"{selected_tool} completed ✅")
                         response_function()
     db.close()
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
-
-
-    
