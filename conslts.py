@@ -1,11 +1,13 @@
 import streamlit as st
+from streamlit_card import card
 import sqlite3
 import LogIn, SignUp
-import student_forms_page
-# import video_display
 import base64
 import os
-from streamlit_card import card
+import random
+from streamlit_javascript import st_javascript
+import student_forms_page, consult_mobile
+
 
 def set_background(image_path, width="500px", height="500px", border_color="red", border_width="5px"):
     try:
@@ -54,26 +56,6 @@ st.markdown("""
     unsafe_allow_html=True
 )
 
-st.markdown('<div class="mental-health-text">Mental Health Is Wealth</div>', unsafe_allow_html=True)
-# set_background("brain_theme3.jpg", width="700px", height="500px", border_color="red", border_width="5px")
-# st.logo('brain.gif')
-def create_connection():
-    try:
-        conn = sqlite3.connect("mhpss_db.sqlite", check_same_thread=False)
-        conn.row_factory = sqlite3.Row
-        return conn
-    except sqlite3.Error as e:
-        st.error(f"Error connecting to SQLite: {e}")
-        return None
-
-if "username" not in st.session_state:
-    st.session_state["username"] = None
-
-if "selected_page" not in st.session_state:
-    st.session_state["selected_page"] = None 
-
-
-
 def set_custom_background(bg_color="skyblue", sidebar_img=None):
     page_bg_img = f"""
         <style>
@@ -101,6 +83,8 @@ def set_custom_background(bg_color="skyblue", sidebar_img=None):
         </style>
     """
     st.markdown(page_bg_img, unsafe_allow_html=True)
+
+
 
 
 pages = [
@@ -320,404 +304,203 @@ def create_user_sessions_table():
             connection.close()
 
 
-def render_task_menu(page_title, task_menu):
-    # st.subheader(f"📋 Select a Task for {page_title}")
-    col1, col2 = st.columns(2)
 
-    for index, task in enumerate(task_menu):
-        with col1 if index % 2 == 0 else col2:
-            if card(
-                title=task["title"],
-                text=task["text"],
-                key=f"task-{task['text']}",
-                styles={
-                    "card": {
-                        "width": "250px",
-                        "height": "250px",
-                        "border-radius": "60px",
-                        "background": "linear-gradient(135deg, #ffffff)",
-                        "color": "white",
-                        "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.25)",
-                        "border": "0.1px solid red",
-                        "text-align": "center",
+task_menu = {
+    "Screening": [],
+    "Sessions": ["Consultations", "Groups"],
+    "Files": [],
+    "Support": ["Emails", "Messages"],
+}
+
+def get_random_color(used_colors):
+    while True:
+        color = "#{:06x}".format(random.randint(0, 0xFFFFFF))
+        if color not in used_colors:
+            used_colors.add(color)
+            return color
+
+def show_cards(items, card_height, font_size_title, font_size_text, key_prefix, cols_per_row):
+    used_colors = set()
+    rows = [items[i : i + cols_per_row] for i in range(0, len(items), cols_per_row)]
+
+    for row in rows:
+        cols = st.columns(cols_per_row)
+        for col, item in zip(cols, row):
+            color = get_random_color(used_colors)
+            with col:
+                clicked = card(
+                    title="🔹" if not item.get("subtasks") else "🎋",
+                    text=item["name"],
+                    key=f"{key_prefix}-{item['name']}",
+                    styles={
+                        "card": {
+                            "width": "100%",
+                            "height": card_height,
+                            "border-radius": "20px",
+                            "background": f"linear-gradient(135deg, {color}, #ffffff)",
+                            "color": "white",
+                            "box-shadow": "0 2px 6px rgba(0,0,0,0.15)",
+                            "border": "1px solid #ccc",
+                            "text-align": "center",
+                            "padding": "10px",
+                            "margin": "0",
+                        },
+                        "title": {
+                            "font-family": "sans-serif",
+                            "font-size": font_size_title,
+                            "margin": "0 0 10px 0",
+                        },
+                        "text": {
+                            "font-family": "sans-serif",
+                            "font-size": font_size_text,
+                            "margin": "0",
+                        },
                     },
-                    "text": {"font-family": "serif", "font-size": "30px"},
-                    "title": {"font-family": "serif", "font-size": "100px"},
-                },
-            ):
-                st.session_state.selected_task = task["text"]
-                st.rerun()
+                )
+                if clicked:
+                    st.session_state.selected_task = item["name"]
+                    st.rerun()
 
-def render_task_menu(page_title, task_menu):
-    col1, col2 = st.columns(2)
-    for index, task in enumerate(task_menu):
-        with col1 if index % 2 == 0 else col2:
-            if card(
-                title=task["title"],
-                text=task["text"],
-                key=f"task-{task['text']}",
-                styles={
-                    "card": {
-                        "width": "300px",
-                        "height": "250px",
-                        "border-radius": "60px",
-                        "background": f"linear-gradient(135deg, #34495e, #ffffff)",
-                        "color": "white",
-                        "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.25)",
-                        "border": f"2px solid #34495e",
-                        "text-align": "center",
+def show_task_menu(is_mobile):
+    tasks = [{"name": k, "subtasks": v} for k, v in task_menu.items()]
+    cols_per_row = 2 if is_mobile else 2
+    show_cards(tasks, card_height="180px" if is_mobile else "220px",
+               font_size_title="80px" if is_mobile else "100px",
+               font_size_text="20px" if is_mobile else "24px",
+               key_prefix="task",
+               cols_per_row=cols_per_row)
+
+def show_subtask_menu(task_name, is_mobile):
+    subtasks = task_menu.get(task_name, [])
+    if not subtasks:
+        app_router(task_name)
+        return
+    subtasks_list = [{"name": subtask, "subtasks": []} for subtask in subtasks]
+    cols_per_row = 1 if is_mobile else 2
+    show_cards(subtasks_list, card_height="140px" if is_mobile else "200px",
+               font_size_title="50px" if is_mobile else "100px",
+               font_size_text="18px" if is_mobile else "30px",
+               key_prefix="subtask",
+               cols_per_row=cols_per_row)
+
+
+def show_cards(items, card_height, font_size_title, font_size_text, key_prefix, cols_per_row):
+    used_colors = set()
+    rows = [items[i : i + cols_per_row] for i in range(0, len(items), cols_per_row)]
+
+    for row in rows:
+        cols = st.columns(cols_per_row)
+        for col, item in zip(cols, row):
+            color = get_random_color(used_colors)
+            task_name = item["name"]
+            icon = task_icons.get(task_name, "📌")  # default fallback icon
+
+            with col:
+                clicked = card(
+                    title=f"{icon}",
+                    text=task_name,
+                    key=f"{key_prefix}-{task_name}",
+                    styles={
+                        "card": {
+                            "width": "100%",
+                            "height": card_height,
+                            "border-radius": "20px",
+                            "background": f"linear-gradient(135deg, {color}, #ffffff)",
+                            "color": "white",
+                            "box-shadow": "0 2px 6px rgba(0,0,0,0.15)",
+                            "border": "1px solid red",
+                            "text-align": "center",
+                            "padding": "10px",
+                            "margin": "0",
+                        },
+                        "title": {
+                            "font-family": "sans-serif",
+                            "font-size": font_size_title,
+                            "margin": "0 0 10px 0",
+                        },
+                        "text": {
+                            "font-family": "sans-serif",
+                            "font-size": font_size_text,
+                            "margin": "0",
+                        },
                     },
-                    "text": {"font-family": "serif", "font-size": "30px"},
-                    "title": {"font-family": "serif", "font-size": "100px"},
-                },
-            ):
-                st.session_state.selected_task = task["text"]
-                st.rerun()
-
-
-# import streamlit as st
-# import student_forms_page
-# import consult_mobile
-# import entire_file 
-# import results_filled_mlt, impact
-
-# def login_page():
-#     st.warning("🔒 Please log in to continue.")
-
-# def show_sidebar():
-#     st.sidebar.success(f'👋 Hi :orange[{st.session_state["username"]}]')
-#     if st.sidebar.button(":red[Sign Out]"):
-#         st.toast(f"👋 :green[Bye] :green[{st.session_state['username']}]")
-#         st.session_state.clear()
-#         st.rerun()
-
-# def show_page_menu():
-#     pages = [
-#         {"title": '📝', "color": "#004d99", "text": "Tasks"},
-#         {"title": "📈", "color": "#27ae60", "text": "Reports"},
-#         {"title": "📦", "color": "#f39c12", "text": "Archives"},
-#         {"title": "📚", "color": "#27ae60", "text": "Files"},
-#     ]
-#     col1, col2 = st.columns(2)
-#     for index, page in enumerate(pages):
-#         with col1 if index % 2 == 0 else col2:
-#             if card(
-#                 title=page["title"],
-#                 text=page["text"],
-#                 key=f"page-{page['text']}",
-#                 styles={
-#                     "card": {
-#                         "width": "300px",
-#                         "height": "250px",
-#                         "border-radius": "60px",
-#                         "background": f"linear-gradient(135deg, {page['color']}, #ffffff)",
-#                         "color": "white",
-#                         "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.25)",
-#                         "border": f"2px solid {page['color']}",
-#                         "text-align": "center",
-#                     },
-#                     "text": {"font-family": "serif", "font-size": "30px"},
-#                     "title": {"font-family": "serif", "font-size": "100px"},
-#                 },
-#             ):
-#                 st.session_state.selected_page = page["title"]
-#                 st.rerun()
-
-# def show_task_menu(page_title):
-#     task_menu = [
-#         {"title": '📝', "text": "Screening"},
-#         {"title": "🧑‍🤝‍🧑", "text": "Consultations"},
-#         {"title": "💬", "text": "Follow-Up"},
-#         {"title": "🛗", "text": "Group sessions"},
-#     ]
-#     render_task_menu(page_title, task_menu)
-
-
-# def render_report_menu(page_title, report_menu):
-#     col1, col2 = st.columns(2)
-#     for index, report in enumerate(report_menu):
-#         with col1 if index % 2 == 0 else col2:
-#             if card(
-#                 title=report["title"],
-#                 text=report["text"],
-#                 key=f"task-{report['text']}",
-#                 styles={
-#                     "card": {
-#                         "width": "300px",
-#                         "height": "250px",
-#                         "border-radius": "60px",
-#                         "background": f"linear-gradient(135deg, #34495e, #ffffff)",
-#                         "color": "white",
-#                         "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.25)",
-#                         "border": f"2px solid #34495e",
-#                         "text-align": "center",
-#                     },
-#                     "text": {"font-family": "serif", "font-size": "30px"},
-#                     "title": {"font-family": "serif", "font-size": "100px"},
-#                 },
-#             ):
-#                 st.session_state.selected_task = report["text"]
-#                 st.rerun()
-
-
-# def show_report_menu(page_title):
-#     report_menu = [
-#         {"title": '📝', "text": "Evaluation"},
-#         {"title": "📈", "text": "Analysis"},
-#     ]
-#     render_report_menu(page_title, report_menu)
-
-
-
-# def app_router(page, task):
-#     if st.button("🔙 Return to Task Menu"):
-#         st.session_state.selected_task = None
-#         st.rerun()
-
-#     if task == "Screening":
-#         student_forms_page.main()
-#     elif task == "Consultations":
-#         consult_mobile.main()
-#     elif task == "Follow-Up":
-#         st.info("📌 Follow-Up Page - Coming soon!")
-#     elif task == "Group sessions":
-#         st.info("👥 Group Sessions - Coming soon!")
-
-
-
-
-
-# def main():
-#     db = create_connection()
-#     create_user_sessions_table()
-#     set_custom_background(bg_color="#2c3e50", sidebar_img=None)
-#     get_menu()
-
-#     for key in ['student_name', 'student_id', 'appointment_id', 'selected_appointment', 'selected_page', 'selected_task']:
-#         if key not in st.session_state:
-#             st.session_state[key] = None
-
-#     if not st.session_state.get("username"):
-#         login_page()
-#         return
-
-#     show_sidebar()
-#     fetch_student_record(st.session_state["username"])
-
-#     if not st.session_state.selected_page:
-#         show_page_menu()
-#     elif st.session_state.selected_page == "📚":  # Files
-#         if st.button("🔙 Return to Page Menu"):
-#             st.session_state.selected_page = None
-#             st.rerun()
-#         entire_file.main()
-
-
-#     elif st.session_state.selected_page == "📈":  # Files
-#         if st.button("🔙 Return to Page Menu"):
-#             st.session_state.selected_page = None
-#             st.rerun()
-#         # results_filled_mlt.main()
-#         # impact.main()
-#         show_report_menu(st.session_state.selected_page)
-
-
-#     elif not st.session_state.selected_task:
-#         if st.button("🔙 Return to Page Menu"):
-#             st.session_state.selected_page = None
-#             st.rerun()
-#         show_task_menu(st.session_state.selected_page)
-
-    
-
-#     elif not st.session_state.selected_task:
-#         if st.button("🔙 Return to Page Menu"):
-#             st.session_state.selected_page = None
-#             st.rerun()
-#         show_report_menu(st.session_state.selected_page)
-
-
-#     else:
-#         app_router(st.session_state.selected_page, st.session_state.selected_task)
-# if __name__ == "__main__":
-#     main()
-import streamlit as st
-import student_forms_page
-import consult_mobile
-import entire_file 
-import results_filled_mlt, impact
+                )
+                if clicked:
+                    st.session_state.selected_task = task_name
+                    st.rerun()
 
 def login_page():
-    st.warning("🔒 Please log in to continue.")
-
-def show_sidebar():
-    st.sidebar.success(f'👋 Hi :orange[{st.session_state["username"]}]')
-    if st.sidebar.button(":red[Sign Out]"):
-        st.toast(f"👋 :green[Bye] :green[{st.session_state['username']}]")
-        st.session_state.clear()
+    st.title("🔐 Login")
+    st.write("Simulated login... click to continue.")
+    if st.button("Log In"):
+        st.session_state.username = "demo"
         st.rerun()
 
-def show_page_menu():
-    pages = [
-        {"title": '📝', "color": "#004d99", "text": "Tasks"},
-        {"title": "📈", "color": "#27ae60", "text": "Reports"},
-        {"title": "📦", "color": "#f39c12", "text": "Archives"},
-        {"title": "📚", "color": "#27ae60", "text": "Files"},
-    ]
-    col1, col2 = st.columns(2)
-    for index, page in enumerate(pages):
-        with col1 if index % 2 == 0 else col2:
-            if card(
-                title=page["title"],
-                text=page["text"],
-                key=f"page-{page['text']}",
-                styles={
-                    "card": {
-                        "width": "300px",
-                        "height": "250px",
-                        "border-radius": "60px",
-                        "background": f"linear-gradient(135deg, {page['color']}, #ffffff)",
-                        "color": "white",
-                        "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.25)",
-                        "border": f"2px solid {page['color']}",
-                        "text-align": "center",
-                    },
-                    "text": {"font-family": "serif", "font-size": "30px"},
-                    "title": {"font-family": "serif", "font-size": "100px"},
-                },
-            ):
-                st.session_state.selected_page = page["title"]
-                st.rerun()
+def show_logout():
+    logout_key = f"logout_button_{st.session_state.get('username', 'guest')}"
+    if st.button("🚪 Logout", key=logout_key):
+        st.session_state.username = None
+        st.session_state.selected_task = None
+        st.rerun()
 
-def show_task_menu(page_title):
-    task_menu = [
-        {"title": '📝', "text": "Screening"},
-        {"title": "🧑‍🤝‍🧑", "text": "Consultations"},
-        {"title": "💬", "text": "Follow-Up"},
-        {"title": "🛗", "text": "Group sessions"},
-    ]
-    render_task_menu(page_title, task_menu)
+def app_router(task=None):
+    if task == "Screening":
+        student_forms_page.main()
+    
+    elif task == "Consultations":
+        consult_mobile.main()
+    
+    elif task == "Groups":
+        st.info("👥 Group Sessions - Coming soon!")
+    
+    elif task == "Files":
+        st.info("📂 File Management - Coming soon!")
+    
+    elif task == "Emails":
+        st.info("📧 Email Support - Coming soon!")
+    
+    elif task == "Messages":
+        st.info("💬 Message Support - Coming soon!")
+    
+    else:
+        st.warning("❌ Invalid task selected.")
 
-def render_report_menu(page_title, report_menu):
-    col1, col2 = st.columns(2)
-    for index, report in enumerate(report_menu):
-        with col1 if index % 2 == 0 else col2:
-            if card(
-                title=report["title"],
-                text=report["text"],
-                key=f"report-{report['text']}",
-                styles={
-                    "card": {
-                        "width": "300px",
-                        "height": "250px",
-                        "border-radius": "60px",
-                        "background": f"linear-gradient(135deg, #34495e, #ffffff)",
-                        "color": "white",
-                        "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.25)",
-                        "border": f"2px solid #34495e",
-                        "text-align": "center",
-                    },
-                    "text": {"font-family": "serif", "font-size": "30px"},
-                    "title": {"font-family": "serif", "font-size": "100px"},
-                },
-            ):
-                st.session_state.selected_report = report["text"]
-                st.rerun()
 
-def show_report_menu(page_title):
-    report_menu = [
-        {"title": '📝', "text": "Evaluation"},
-        {"title": "📈", "text": "Analysis"},
-        {"title": "🎋", "text": "Interventions"}
-    ]
-    render_report_menu(page_title, report_menu)
+task_icons = {
+    "Screening": "📝",         # Questionnaires/forms
+    "Consultations": "👩‍⚕️",   # One-on-one clinical consult
+    "Groups": "👨‍👨‍👦",            # Group activities/sessions
+    "Files": "📂",            # File/document management
+    "Support": "🛠️",          # Help desk or tools
+    "Emails": "📧",           # Email-based support
+    "Messages": "💬",         # Messaging/chat support
+}
 
-def app_router(page, task=None, report=None):
-    # Handle Task Menu Navigation
-    if task:
-        if task == "Screening":
-            student_forms_page.main()
-        elif task == "Consultations":
-            consult_mobile.main()
-        elif task == "Follow-Up":
-            st.info("📌 Follow-Up Page - Coming soon!")
-        elif task == "Group sessions":
-            st.info("👥 Group Sessions - Coming soon!")
-        return
-    if report:
-        if report == "Evaluation":
-            impact.main() 
-        elif report == "Analysis":
-            results_filled_mlt.main()
-
-        elif report == "Interventions":
-            st.info('Interventions done')
-        else:
-            st.info("🚨 Invalid Report Selection!")
-        return
 
 
 def main():
-    db = create_connection()
-    create_user_sessions_table()
-    set_custom_background(bg_color="#2c3e50", sidebar_img=None)
-    get_menu()
-
-    for key in ['student_name', 'student_id', 'appointment_id', 'selected_appointment', 'selected_page', 'selected_task', 'selected_report']:
+    width = st_javascript("window.innerWidth", key="js-width-consults") or 1024
+    is_mobile = width < 700
+    for key in ['username', 'selected_task']:
         if key not in st.session_state:
             st.session_state[key] = None
-
     if not st.session_state.get("username"):
         login_page()
         return
-
-    show_sidebar()
-    fetch_student_record(st.session_state["username"])
-
-    # PAGE MENU
-    if not st.session_state.selected_page:
-        show_page_menu()
-        return
-
-    # FILES PAGE
-    if st.session_state.selected_page == "📚":
-        if st.button("🔙 Return to Page Menu"):
-            st.session_state.selected_page = None
-            st.rerun()
-        entire_file.main()
-        return
-
-    # REPORT MENU
-    if st.session_state.selected_page == "📈":
-        # Show report content
-        if st.session_state.selected_report:
-            if st.button("🔙 Return to Report Menu"):
-                st.session_state.selected_report = None
-                st.rerun()
-            app_router(st.session_state.selected_page, report=st.session_state.selected_report)
-        else:
-            if st.button("🔙 Return to Page Menu"):
-                st.session_state.selected_page = None
-                st.rerun()
-            show_report_menu(st.session_state.selected_page)
-        return
-
-    # TASK MENU
-    if st.session_state.selected_page == "📝":
-        if st.session_state.selected_task:
-            if st.button("🔙 Return to Task Menu"):
+    if st.session_state.selected_task:
+        if st.button("🔙 Back"):
+            current_task = st.session_state.selected_task
+            if current_task in task_menu:
                 st.session_state.selected_task = None
-                st.rerun()
-            app_router(st.session_state.selected_page, task=st.session_state.selected_task)
-        else:
-            if st.button("🔙 Return to Page Menu"):
-                st.session_state.selected_page = None
-                st.rerun()
-            show_task_menu(st.session_state.selected_page)
-        return
-    st.warning("⚠️ Under development.")
-    if st.button("🔙 Return to Page Menu"):
-        st.session_state.selected_page = None
-        st.rerun()
+            else:
+                for parent, children in task_menu.items():
+                    if current_task in children:
+                        st.session_state.selected_task = parent
+                        break
+            st.rerun()
+        show_subtask_menu(st.session_state.selected_task, is_mobile)
+    else:
+        show_task_menu(is_mobile)
+
 if __name__ == "__main__":
     main()
