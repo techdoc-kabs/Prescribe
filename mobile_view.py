@@ -4,7 +4,7 @@ from streamlit_card import card
 import random
 import sqlite3
 import bcrypt
-import student_page
+# import student_page
 import conslts
 import LogIn, SignUp, student_tool_page
 
