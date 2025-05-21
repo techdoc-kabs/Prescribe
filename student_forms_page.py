@@ -12,15 +12,27 @@ from streamlit_card import card
 import sqlite3
 import bcrypt
 from streamlit_option_menu import option_menu
-
 import session_notes
+from streamlit_javascript import st_javascript
+st.markdown(
+        """
+        <style>
+        .card-wrapper {
+            margin-bottom: 0px; /* Tight vertical spacing */
+        }
+        .element-container:has(.stCard) {
+            padding-bottom: 0px !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 def set_background(image_path, width="500px", height="500px", border_color="orange", border_width="5px"):
     try:
         if not os.path.exists(image_path):
             st.error(f"Image file '{image_path}' not found.")
             return
-        
         with open(image_path, "rb") as img_file:
             encoded_string = base64.b64encode(img_file.read()).decode()
         st.markdown(f"""
@@ -64,18 +76,7 @@ tool_modules = {
 }
 
 
-def table_exists(db, table_name):
-    cursor = db.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
-    result = cursor.fetchone()
-    cursor.close()
-    return result is not None
-
 def fetch_requested_tools(db, appointment_id):
-    table_name = "requested_tools_students"
-    if not table_exists(db, table_name):
-        print(f"Warning: Table '{table_name}' does not exist.")
-        return {}
     try:
         cursor = db.cursor()
         fetch_query = """
@@ -193,10 +194,6 @@ def search_edit_and_update_student(db, username):
             st.error("Student record not found in the database.")
 
 def get_requested_tools(db, appointment_id):
-    table_name = "requested_tools_students"
-    if not table_exists(db, table_name):
-        st.error(f"Warning: Table '{table_name}' does not exist.")
-        return {}
     try:
         db.row_factory = sqlite3.Row
         cursor = db.cursor()
@@ -217,15 +214,6 @@ def get_requested_tools(db, appointment_id):
 def create_functioning_responses_table():
     db = sqlite3.connect("mhpss_db.sqlite")
     cursor = db.cursor()
-    # create_table_query = """
-    # CREATE TABLE IF NOT EXISTS functioning_responses (
-    #     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    #     appointment_id TEXT NOT NULL,
-    #     student_id TEXT NOT NULL,
-    #     difficulty_level TEXT NOT NULL CHECK(difficulty_level IN ('Not difficult at all', 'Somewhat difficult', 'Very difficult', 'Extremely difficult')),
-    #     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    # );
-    # """
     create_table_query = """
         CREATE TABLE IF NOT EXISTS functioning_responses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -253,22 +241,6 @@ def check_functioning_completed(db, appointment_id):
     result = cursor.fetchone()
     cursor.close()
     return result
-
-# def insert_functioning_response(db, appointment_id, student_id, difficulty_level):
-#     cursor = db.cursor()
-#     insert_query = """
-#     INSERT INTO functioning_responses (appointment_id, student_id, difficulty_level)
-#     VALUES (?, ?, ?)
-#     """
-#     try:
-#         cursor.execute(insert_query, (appointment_id, student_id, difficulty_level))
-#         db.commit()
-#         return True
-#     except Exception as err:
-#         st.error(f"Error inserting response: {err}")
-#         return False
-#     finally:
-#         cursor.close()
 
 def insert_functioning_response(db, appointment_id, student_id, difficulty_level):
     cursor = db.cursor()
@@ -298,7 +270,6 @@ def insert_functioning_response(db, appointment_id, student_id, difficulty_level
         return False
     finally:
         cursor.close()
-
 
 def display_functioning_questionnaire(db, appointment_id, student_id):
     completed_response = check_functioning_completed(db, appointment_id)
@@ -347,7 +318,6 @@ def set_background2(image_path, width="500px", height="500px", border_color="ora
 col1, col2 = st.columns(2)
 with col1:
     set_background("brain_theme3.jpg", width="300px", height="150px", border_color="red", border_width="5px")
-
 
 def fetch_students(db, search_input):
     cursor = db.cursor()
@@ -420,42 +390,52 @@ response_modules = {
     'Functioning': 'Noted'
 }
 
-import sqlite3
 
-def add_fnx_score_column():
-    db = sqlite3.connect("mhpss_db.sqlite")
-    cursor = db.cursor()
-    try:
-        # Try adding the column
-        cursor.execute("ALTER TABLE functioning_responses ADD COLUMN fnx_score INTEGER")
-        db.commit()
-        print("Column 'fnx_score' added successfully.")
-    except sqlite3.OperationalError as e:
-        # This error likely means the column already exists
-        print(f"Error (probably column exists): {e}")
-    finally:
-        cursor.close()
-        db.close()
 
 def main():
     db = create_connection()
     create_functioning_responses_table()
-    # add_fnx_score_column()
-    if "selected_record" not in st.session_state:
-        st.session_state.selected_record = None
-    if "selected_appointment" not in st.session_state:
-        st.session_state.selected_appointment = None
-    if "selected_tool" not in st.session_state:
-        st.session_state.selected_tool = None
-    if "selected_page" not in st.session_state:
-        st.session_state.selected_page = "screening_menu"
-    if "last_search_input" not in st.session_state:
-        st.session_state.last_search_input = ""
+    st.markdown(
+        """
+        <style>
+        .card-wrapper {
+            margin-bottom: 0px; /* Tight vertical spacing */
+        }
+        .element-container:has(.stCard) {
+            padding-bottom: 0px !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
-    with st.sidebar:
-        st.subheader('STUDENT INFO')
-    with st.sidebar.expander("🔍SEARCH", expanded=True):
+    # Detect screen width for responsiveness
+    device_width = st_javascript("window.innerWidth", key="device_width")
+    if device_width is None:
+        st.stop()
+
+    is_mobile = device_width < 768
+    num_cols = 3 if is_mobile else 4
+    card_width = "100%" if is_mobile else "250px"
+    appointment_card_height = "150px" if is_mobile else "220px"
+    tool_card_height = "100px" if is_mobile else "150"
+    font_size_title = "20px" if is_mobile else "30px"
+    font_size_text = "16px" if is_mobile else "20px"
+
+    for key, default in {
+        "selected_record": None,
+        "selected_appointment": None,
+        "selected_tool": None,
+        "selected_page": "screening_menu",
+        "last_search_input": ""
+    }.items():
+        if key not in st.session_state:
+            st.session_state[key] = default
+
+    col1, col2 = st.columns([2, 2])
+    with col1.expander("🔍SEARCH", expanded=True):
         search_input = st.text_input("Enter Name or STD ID", "")
+
     if search_input != st.session_state.last_search_input:
         st.session_state.selected_record = None
         st.session_state.selected_appointment = None
@@ -463,20 +443,20 @@ def main():
         st.session_state.last_search_input = search_input
 
     results = []
-    if st.session_state.selected_record is None:
-        if search_input.strip():
-            results = fetch_students(db, search_input)
-
-            if results:
-                st.sidebar.write(f"**{len(results)} result(s) found**")
+    if st.session_state.selected_record is None and search_input.strip():
+        results = fetch_students(db, search_input)
+        if results:
+            with col1.expander('Results', expanded=True):
+                st.write(f"**{len(results)} result(s) found**")
                 options = {f"{r['name']} - {r['student_id']}": r for r in results}
-                selected_option = st.sidebar.selectbox("Select a record:", list(options.keys()))
+                selected_option = st.selectbox("Select a record:", list(options.keys()))
                 st.session_state.selected_record = options[selected_option]
-            else:
-                st.sidebar.error(f'No record for {search_input} ')
+        else:
+            st.error(f'No record for {search_input} ')
+
     if st.session_state.selected_record:
         selected_record = st.session_state.selected_record
-        with st.sidebar.expander("📄 STUDENT INFO", expanded=True):
+        with col2.expander("📄 STUDENT INFO", expanded=True):
             st.write(f"Student ID: {selected_record['student_id']}")
             st.write(f"Name: {selected_record['name']}")
             st.write(f"Gender: {selected_record['gender']}")
@@ -491,136 +471,134 @@ def main():
 
         if st.session_state.selected_appointment is None:
             if appointment_details:
-                if st.button("🔙 Screening Menu"):
-                    st.session_state.selected_record = None
-                    st.rerun()
-
-                col1, col2 = st.columns(2)
+                cols = st.columns(num_cols)
                 for index, appointment in enumerate(appointment_details):
-                    appointment_id = appointment["appointment_id"]
-                    screen_type = appointment["screen_type"]
-                    tool_statuses = appointment["tool_status"].split(", ") if appointment["tool_status"] else []
-                    appointment_color = f"#{hash(str(appointment_id)) % 0xFFFFFF:06x}"
+                    with cols[index % num_cols]:
+                        with st.container():
+                            st.markdown('<div class="card-wrapper">', unsafe_allow_html=True)
+                            appointment_id = appointment["appointment_id"]
+                            screen_type = appointment["screen_type"]
+                            tool_statuses = appointment["tool_status"].split(", ") if appointment["tool_status"] else []
+                            appointment_color = f"#{hash(str(appointment_id)) % 0xFFFFFF:06x}"
+                            status_text = "Completed ✅" if all(status.strip() == "Completed" for status in tool_statuses) else "Pending ⏳"
+                            title = ordinal(len(appointment_details) - index)
 
-                    status_text = "Completed ✅" if all(status.strip() == "Completed" for status in tool_statuses) else "Pending ⏳"
-                    title = ordinal(len(appointment_details) - index)
-
-                    with col1 if index % 2 == 0 else col2:
-                        hasClicked = card(
-                            title=f'{title} - {screen_type}',
-                            text=f"{appointment_id}\n{status_text} ",
-                            url=None,
-                            styles={
-                                "card": {
-                                    "width": "220px",
-                                    "height": "200px",
-                                    "border-radius": "30px",
-                                    "background": appointment_color,
-                                    "color": "white",
-                                    "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.15)",
-                                    "border": f"0.01px solid red",
-                                    "text-align": "center",
+                            hasClicked = card(
+                                title=f'{title} - {screen_type}',
+                                text=f"{appointment_id}\n{status_text}",
+                                url=None,
+                                styles={
+                                    "card": {
+                                        "width": card_width,
+                                        "height": appointment_card_height,
+                                        "margin": "0px",
+                                        "border-radius": "30px",
+                                        "background": appointment_color,
+                                        "color": "white",
+                                        "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.15)",
+                                        "border": "1px solid red",
+                                        "text-align": "center",
+                                    },
+                                    "text": {"font-family": "serif", "font-size": font_size_text},
+                                    "title": {"font-family": "serif", "font-size": font_size_title}
                                 },
-                                "text": {"font-family": "serif"},
-                                "title": {"font-family": "serif", 'font-size': 22}
-                            },
-                        )
-
-                        if hasClicked:
-                            st.session_state.selected_appointment = appointment
-                            st.session_state.appointment_id = appointment_id
-                            st.rerun()
+                            )
+                            st.markdown('</div>', unsafe_allow_html=True)
+                            if hasClicked:
+                                st.session_state.selected_appointment = appointment
+                                st.session_state.appointment_id = appointment_id
+                                st.rerun()
 
         elif st.session_state.selected_tool is None:
             appointment_id = st.session_state.appointment_id
-            task_reslt= option_menu(
-                                menu_title='',
-                                orientation='horizontal',
-                                menu_icon='',
-                                options=['Assessments', 'Results','Session notes', 'Report'],
-                                icons=['gear','bar-chart', 'book','printer'],
-                                styles={
-                                    "container": {"padding": "8!important", "background-color": 'black','border': '0.01px dotted red'},
-                                    "icon": {"color": "red", "font-size": "15px"},
-                                    "nav-link": {"color": "#d7c4c1", "font-size": "15px","font-weight":'bold', "text-align": "left", "margin": "0px", "--hover-color": "red"},
-                                    "nav-link-selected": {"background-color": "green"},
-                                },
-                                key="task_reslt")
+            task_reslt = option_menu(
+                menu_title='',
+                orientation='horizontal',
+                menu_icon='',
+                options=['Screen', 'Results', 'Notes'],
+                icons=['book', 'bar-chart', 'printer'],
+                styles={
+                    "container": {"padding": "8!important", "background-color": 'black', 'border': '0.01px dotted red'},
+                    "icon": {"color": "red", "font-size": "15px"},
+                    "nav-link": {"color": "#d7c4c1", "font-size": "15px", "font-weight": 'bold', "text-align": "left", "margin": "0px", "--hover-color": "red"},
+                    "nav-link-selected": {"background-color": "green"},
+                },
+                key="task_reslt"
+            )
 
-            if task_reslt == 'Assessments':
+            if task_reslt == 'Screen':
                 tool_status_list = get_requested_tools(db, appointment_id)
                 requested_tools = fetch_requested_tools(db, appointment_id)
-                tools_list = list(requested_tools)
-                if not tools_list:
-                    st.warning("No requested tools found.")
-                    db.close()
-                    return
-                tools_list = tools_list + ["Functioning"]
-                tool_colors = {}
-                tool_images = {}
-                for tool in tools_list:
-                    tool_colors[tool] = f"#{hex(hash(tool) % 0xFFFFFF)[2:].zfill(6)}"
-                    tool_images[tool] = f"images/{tool.lower()}.png"
-                if st.button("🔙 Return to Appointment Menu_"):
+                tools_list = list(requested_tools) + ["Functioning"]
+
+                tool_colors = {tool: f"#{hex(hash(tool) % 0xFFFFFF)[2:].zfill(6)}" for tool in tools_list}
+                tool_images = {tool: f"images/{tool.lower()}.png" for tool in tools_list}
+
+                if st.button("🔙back"):
                     st.session_state.selected_appointment = None
                     st.rerun()
-                cols = st.columns(2)
+
+                cols = st.columns(num_cols)
                 for idx, tool in enumerate(tools_list):
-                    if tool == "Functioning":
-                        tool_status = check_functioning_completed(db, appointment_id)
-                        tool_status = "Completed" if tool_status and tool_status[0] else "Pending"
-                    else:
-                        tool_status = requested_tools.get(tool, "Pending")
+                    with cols[idx % num_cols]:
+                        with st.container():
+                            st.markdown('<div class="card-wrapper">', unsafe_allow_html=True)
+                            if tool == "Functioning":
+                                status_check = check_functioning_completed(db, appointment_id)
+                                tool_status = "Completed" if status_check and status_check[0] else "Pending"
+                            else:
+                                tool_status = requested_tools.get(tool, "Pending")
 
-                    image_path = tool_images.get(tool, "brain.gif")
-                    try:
-                        with open(image_path, "rb") as f:
-                            data = f.read()
-                            encoded = base64.b64encode(data).decode("utf-8")
-                            image_data = f"data:image/png;base64,{encoded}"
-                    except FileNotFoundError:
-                        image_data = None
+                            image_path = tool_images.get(tool, "brain.gif")
+                            try:
+                                with open(image_path, "rb") as f:
+                                    encoded = base64.b64encode(f.read()).decode("utf-8")
+                                    image_data = f"data:image/png;base64,{encoded}"
+                            except FileNotFoundError:
+                                image_data = None
 
-                    with cols[idx % 2]:
-                        display_text = "Update" if tool == "PROFILE" else ("Completed ✅" if tool_status == "Completed" else "Pending ⏳")
-                        hasClicked = card(
-                            title=tool,
-                            text=display_text,
-                            image=image_data,
-                            url=None,
-                            styles={
-                                "card": {
-                                    "width": "300px",
-                                    "height": "150px",
-                                    "border-radius": "30px",
-                                    "border-color": "red",
-                                    "background-color": tool_colors.get(tool, "lightgray"),
-                                    "color": "white",
-                                    "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.15)",
-                                    "border": "2px solid #600000"
-                                },
-                                "text": {"font-family": "serif"},
-                            }
-                        )
-                        if hasClicked:
-                            st.session_state.selected_tool = tool
-                            st.rerun()
+                            display_text = "Update" if tool == "PROFILE" else ("Completed ✅" if tool_status == "Completed" else "Pending ⏳")
+                            hasClicked = card(
+                                title=tool,
+                                text=display_text,
+                                image=image_data,
+                                url=None,
+                                styles={
+                                    "card": {
+                                        "width": card_width,
+                                        "height": tool_card_height,
+                                        "margin": "0px",
+                                        "border-radius": "30px",
+                                        "border-color": "red",
+                                        "background-color": tool_colors.get(tool, "lightgray"),
+                                        "color": "white",
+                                        "box-shadow": "0 4px 12px rgba(0, 0, 0, 0.15)",
+                                        "border": "2px solid #600000"
+                                    },
+                                    "text": {"font-family": "serif", "font-size": font_size_text},
+                                    "title": {"font-family": "serif", "font-size": font_size_title}
+                                })
+
+                            st.markdown('</div>', unsafe_allow_html=True)
+                            if hasClicked:
+                                st.session_state.selected_tool = tool
+                                st.rerun()
 
             elif task_reslt == 'Results':
                 results_filled.main()
-
-            elif task_reslt == 'Session notes':
+            elif task_reslt == 'Notes': 
                 session_notes.main()
-               
 
-            if st.button("🔙 Return to Appointment Menu"):
-                    st.session_state.selected_appointment = None
-                    st.rerun()
+            if st.button("🔙 back"):
+                st.session_state.selected_appointment = None
+                st.rerun()
+
         else:
             selected_tool = st.session_state.selected_tool
-            if st.button("🔙 Return to Appointment Menu", key="return_btn"):
+            if st.button("🔙 back", key="return_btn"):
                 st.session_state.selected_tool = None
                 st.rerun()
+
             appointment_id = st.session_state.appointment_id
             student_id = st.session_state.selected_record['student_id']
             if selected_tool == "Functioning":
@@ -628,7 +606,7 @@ def main():
             else:
                 tool_status = fetch_requested_tools(db, appointment_id).get(selected_tool, "Pending")
                 if selected_tool not in tool_modules:
-                    st.warning(f"No module found for the tool: {selected_tool}. Please contact support for help.")
+                    st.warning(f"No module found for the tool: {selected_tool}. Please contact support.")
                 else:
                     module_function = tool_modules[selected_tool]
                     response_function = response_modules[selected_tool]
@@ -642,5 +620,6 @@ def main():
                         st.success(f"{selected_tool} completed ✅")
                         response_function()
     db.close()
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()
